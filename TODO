@@ -2,3 +2,4 @@
 2. Finish forward structured pruning
 3. Register backward pruning
 4. PyTorch build-in prune functions
+5. mase pruning transforms: consider both W & IA sparsity

@@ -30,7 +30,7 @@ class JSC_Toy(nn.Module):
 
 
 class JSC_Tiny(nn.Module):
-    def __init__(self, info):
+    def __init__(self, info=None):
         super(JSC_Tiny, self).__init__()
         self.seq_blocks = nn.Sequential(
             # 1st LogicNets Layer

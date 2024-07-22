@@ -3,32 +3,36 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchvision
+import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-# 设置随机数种子保证论文可复现
-seed = 42
-torch.manual_seed(seed)
-np.random.seed(seed)
-random.seed(seed)
-torch.cuda.manual_seed_all(seed)
 
-# 以类的方式定义参数，还有很多方法，config文件等等
+
+seed = 42
+# torch.manual_seed(seed)
+# np.random.seed(seed)
+# random.seed(seed)
+# torch.cuda.manual_seed_all(seed)
+
+
 class Args:
     def __init__(self) -> None:
-        self.batch_size = 1
+        self.batch_size = 256
         self.lr = 0.001
-        self.epochs = 10
+        self.epochs = 5
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.data_train = np.array([-2, -1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 20])
+        # self.data_train = np.array([-2, -1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 20])
+        self.data_train = np.random.random_integers(-30, 30, size=100)
         # self.data_val = np.array([15, 16, 17, 0.1, -3, -4])
         self.data_val = np.random.random_integers(-30, 30, size=100)
 
 
 args = Args()
 
-# 定义一个简单的全连接
+# A toy network
 class Net(nn.Module):
     def __init__(self, in_dim, n_hidden_1, n_hidden_2, out_dim):
         super().__init__()
@@ -44,8 +48,24 @@ class Net(nn.Module):
         x = self.layer3(x)
         return x
 
-
-# 定义数据集，判断一个数字是否大于8
+class ToyCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
+        self.conv2_drop = nn.Dropout2d()
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, 10)
+    def forward(self, x):
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = x.view(-1, 320)
+        x = F.relu(self.fc1(x))
+        x = F.dropout(x, training=self.training)
+        x = self.fc2(x)
+        return F.log_softmax(x)
+    
+# A toy dataset for determining whether a given number is greater than 8 or not
 class Dataset_num(Dataset):
     def __init__(self, flag='train') -> None:
         self.flag = flag
@@ -71,17 +91,29 @@ class Dataset_num(Dataset):
 
 class Toy:
     def __init__(self):
-        self.model = Net(1, 32, 16, 2).to(args.device) # 网络参数设置，输入为1，输出为2，即判断一个数是否大于8
-
-        self.train_dataset = Dataset_num(flag='train')
-        self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=args.batch_size, shuffle=True)
-        self.val_dataset = Dataset_num(flag='val')
-        self.val_dataloader = DataLoader(dataset=self.val_dataset, batch_size=args.batch_size, shuffle=True)
+        # self.model = Net(1, 32, 16, 2).to(args.device) # input size=1, output size=2
+        self.model = ToyCNN()
+        self.train_dataset = torchvision.datasets.MNIST('./datasets/', train=True, download=False,
+                                    transform=torchvision.transforms.Compose([
+                                        torchvision.transforms.ToTensor(),
+                                        torchvision.transforms.Normalize(
+                                            (0.1307,), (0.3081,))]))
+        self.val_dataset = torchvision.datasets.MNIST('./datasets/', train=False, download=False,
+                                    transform=torchvision.transforms.Compose([
+                                        torchvision.transforms.ToTensor(),
+                                        torchvision.transforms.Normalize(
+                                            (0.1307,), (0.3081,))]))
+        self.train_dataloader = DataLoader(self.train_dataset, batch_size=args.batch_size, shuffle=True)
+        self.val_dataloader = DataLoader(self.val_dataset, batch_size=args.batch_size, shuffle=True)
+        # self.train_dataset = Dataset_num(flag='train')
+        # self.train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=args.batch_size, shuffle=True)
+        # self.val_dataset = Dataset_num(flag='val')
+        # self.val_dataloader = DataLoader(dataset=self.val_dataset, batch_size=args.batch_size, shuffle=True)
 
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr)  # , eps=1e-8)
 
-    def train(self, prune=False, prune_thres=0.05):
+    def train(self, prune=False, prune_module=None, prune_thres=0.05, prune_sparsity=0.5):
         for epoch in range(args.epochs):
             self.model.train()
             train_epoch_loss = []
@@ -90,14 +122,14 @@ class Toy:
             acc, nums = 0, 0
             
             # =========================train=======================
-            for idx, (label, inputs) in enumerate(tqdm(self.train_dataloader)):
+            for idx, (inputs, label) in enumerate(tqdm(self.train_dataloader)):
                 inputs = inputs.to(args.device)
                 label = label.to(args.device)
                 outputs = self.model(inputs)
                 self.optimizer.zero_grad()
                 loss = self.criterion(outputs, label)
                 loss.backward()
-                # torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0) #用来梯度裁剪
+                # torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0) # for grad clipping
                 self.optimizer.step()
                 train_epoch_loss.append(loss.item())
                 acc += sum(outputs.max(axis=1)[1] == label).cpu()
@@ -110,9 +142,10 @@ class Toy:
             print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
             
             if prune:
-                self.simple_prune(thres=prune_thres)
+                # self.simple_prune(thres=prune_thres)
+                self.structured_prune(module=prune_module, block_num=80, sparsity=prune_sparsity)
                 
-        self.save_model('./ckpts/model.pth')
+        self.save_model('./ckpts/mnist_cnn_model.pth')
         
     def eval(self):
         # =========================val=========================
@@ -120,7 +153,7 @@ class Toy:
             self.model.eval()
             val_loss_list = []
             acc, nums = 0, 0
-            for idx, (label, inputs) in enumerate(tqdm(self.val_dataloader)):
+            for idx, (inputs, label) in enumerate(tqdm(self.val_dataloader)):
                 inputs = inputs.to(args.device)  # .to(torch.float)
                 label = label.to(args.device)
                 outputs = self.model(inputs)
@@ -139,16 +172,14 @@ class Toy:
         thres = 0.05
         for thres in np.linspace(0.00, 0.20, 10):
             mask = torch.where(torch.abs(w)<thres, 1, 0)
-            print("Sparsity of layer2 with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
+            print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
         
     def pred(self, val):
         model = Net(1, 32, 16, 2)
         model.load_state_dict(torch.load('model.pth'))
         model.eval()
         val = torch.tensor(val).reshape(1, -1).float()
-        # 需要转换成相应的输入shape，而且得带上batch_size，因此转换成shape=(1,1)这样的形状
         res = model(val)
-        # real: tensor([[-5.2095, -0.9326]], grad_fn=<AddmmBackward0>) 需要找到最大值所在的列数，就是标签
         res = res.max(axis=1)[1].item()
         print("predicted label is {}, {} {} 8".format(res, val.item(), ('>' if res == 1 else '<')))
 
@@ -166,40 +197,94 @@ class Toy:
         plt.show()
 
     def save_model(self, path):
-        # =========================save model=====================
         torch.save(self.model.state_dict(), path)
-    
-    def simple_prune(self, thres):
-        module = self.model.layer2[0]
+        
+    def load_model(self, path):
+        self.model.load_state_dict(torch.load(path))
+        
+    def simple_prune(self, module, thres):
         print('INFO: Pruning...')
         # print('Weight before pruning:')
         # print(module.weight.data)
-        mask = torch.abs(module.weight.data) >= thres
+        mask = (torch.abs(module.weight.data) >= thres)
         module.weight.data *= mask.float()
         # print('Weight after pruning:')
         # print(module.weight.data)
-       
+        print('INFO: Finished pruning.')
+    
+    def structured_prune(self, module, block_num, sparsity=0.5, silent=True):
+        row, col = module.weight.data.shape
+        assert (col % block_num == 0), f"The weight is not divisible by {block_num}."
+        assert (sparsity <= 1 and sparsity >= 0)
+        
+        block_size = int(col / block_num)
+        sparse_block_num = int(block_num*sparsity)
+        
+        # 1. create a block-level mask
+        block_mask = torch.ones((row, block_num))
+        
+        random.seed(g_seed)
+        for i in range(row):
+            # randomly pick sparse_block_num blocks for each layer
+            picked_block_ids = random.sample(list(range(block_num)), sparse_block_num)
+            # nullify the picked blocks
+            for block_id in picked_block_ids:
+                block_mask[i][block_id] = 0
+        if not silent:
+            print('Generated block-level mask:')
+            print(block_mask)
+        
+        # 2. transform block_mask into an elementwise mask
+        element_mask = torch.ones((row, col))
+        for i in range(row):
+            for j in range(col):
+                block_id = j // block_size
+                element_mask[i][j] = 0 if (block_mask[i][block_id] == 0) else 1
+        
+        # 3. apply the mask
+        module.weight.data *= element_mask.float()
+        
 if __name__ == '__main__':
-    toy = Toy()
+    g_seed = random.randint(0, 100)  # change seed for every program execution
     
-    # prune after training
-    print('========== Prune after training ===========')
-    toy.train()
-    toy.check_sparsity(toy.model.layer2[0])  # the second linear layer
-    acc_1, loss_1 = toy.eval()
-    toy.simple_prune(thres=0.1)
-    acc_2, loss_2 = toy.eval()
-    print(acc_1, loss_1, acc_2, loss_2)
-    # toy.pred(24)
-    # toy.pred(3.14)
-    # toy.pred(7.8)  # 这个会预测错误，所以数据量对于深度学习很重要
+    # toy = Toy()
+    # # # toy.train(prune=False)
+    # toy.load_model('./ckpts/mnist_cnn_model.pth')
+    # module = toy.model.fc1
+    # toy.check_sparsity(module)  # the second linear layer
     
+    # print('========== Prune after training ===========')
+    # acc_1, loss_1 = toy.eval()
+    # # toy.simple_prune(module=module, thres=0.1)
+    # toy.structured_prune(module=module, block_num=40, sparsity=0.9)
+    # acc_2, loss_2 = toy.eval()
+    # print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
+    
+    ################ For Sweeping Pruning Params ##############
+    # toy.load_model('./ckpts/mnist_cnn_model.pth')
+    # acc_1, loss_1 = toy.eval()
+    
+    # for i in np.linspace(0.5, 1, 6):
+    #     toy.load_model('./ckpts/mnist_cnn_model.pth')
+    #     print('========== Prune after training ===========')
+    #     print("Sparsity=%f"%i)
+    #     toy.structured_prune(module=module, block_num=8, sparsity=i)
+    #     acc_2, loss_2 = toy.eval()
+    #     print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
+    ################################################################
+        
     print('========== Prune with training ===========')
-    # prune with training
     toy = Toy()
-    toy.train(prune=True, prune_thres=0.1)
-    acc_1, loss_1 = toy.eval()
-    acc_2, loss_2 = toy.eval()
-    print(acc_1, loss_1, acc_2, loss_2)
+    toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=0.5)
+    # acc_1, loss_1 = toy.eval()
+    # acc_2, loss_2 = toy.eval()
+    # print(acc_1, loss_1, acc_2, loss_2)
     
-    
+    ################ For Sweeping Pruning Params ##############    
+    for i in np.linspace(0.5, 1, 6):
+        print('========== Prune with training ===========')
+        print("Sparsity=%f"%i)
+        toy = Toy()
+        toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=i)
+    ################################################################
+        
