@@ -1,0 +1,4 @@
+1. Use more complicated networks
+2. Finish forward structured pruning
+3. Register backward pruning
+4. PyTorch build-in prune functions

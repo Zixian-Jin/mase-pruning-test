@@ -19,10 +19,11 @@ class Args:
     def __init__(self) -> None:
         self.batch_size = 1
         self.lr = 0.001
-        self.epochs = 1
+        self.epochs = 10
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.data_train = np.array([-2, -1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 20])
-        self.data_val = np.array([15, 16, 17, 0.1, -3, -4])
+        # self.data_val = np.array([15, 16, 17, 0.1, -3, -4])
+        self.data_val = np.random.random_integers(-30, 30, size=100)
 
 
 args = Args()
@@ -80,7 +81,7 @@ class Toy:
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr)  # , eps=1e-8)
 
-    def train(self):
+    def train(self, prune=False, prune_thres=0.05):
         for epoch in range(args.epochs):
             self.model.train()
             train_epoch_loss = []
@@ -105,9 +106,12 @@ class Toy:
             train_acc.append(100 * acc / nums)
             print("train acc = {:.3f}%, loss = {}".format(100 * acc / nums, np.average(train_epoch_loss)))
         
-        val_acc, val_loss = self.eval()
-        print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
+            val_acc, val_loss = self.eval()
+            print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
             
+            if prune:
+                self.simple_prune(thres=prune_thres)
+                
         self.save_model('./ckpts/model.pth')
         
     def eval(self):
@@ -165,13 +169,37 @@ class Toy:
         # =========================save model=====================
         torch.save(self.model.state_dict(), path)
     
-
+    def simple_prune(self, thres):
+        module = self.model.layer2[0]
+        print('INFO: Pruning...')
+        # print('Weight before pruning:')
+        # print(module.weight.data)
+        mask = torch.abs(module.weight.data) >= thres
+        module.weight.data *= mask.float()
+        # print('Weight after pruning:')
+        # print(module.weight.data)
+       
 if __name__ == '__main__':
     toy = Toy()
     
+    # prune after training
+    print('========== Prune after training ===========')
     toy.train()
     toy.check_sparsity(toy.model.layer2[0])  # the second linear layer
-
+    acc_1, loss_1 = toy.eval()
+    toy.simple_prune(thres=0.1)
+    acc_2, loss_2 = toy.eval()
+    print(acc_1, loss_1, acc_2, loss_2)
     # toy.pred(24)
     # toy.pred(3.14)
     # toy.pred(7.8)  # 这个会预测错误，所以数据量对于深度学习很重要
+    
+    print('========== Prune with training ===========')
+    # prune with training
+    toy = Toy()
+    toy.train(prune=True, prune_thres=0.1)
+    acc_1, loss_1 = toy.eval()
+    acc_2, loss_2 = toy.eval()
+    print(acc_1, loss_1, acc_2, loss_2)
+    
+    
