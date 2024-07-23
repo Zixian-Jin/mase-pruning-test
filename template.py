@@ -25,9 +25,9 @@ class Args:
         self.epochs = 5
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # self.data_train = np.array([-2, -1, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 20])
-        self.data_train = np.random.random_integers(-30, 30, size=100)
+        self.data_train = np.random.randint(-30, 30, size=100)
         # self.data_val = np.array([15, 16, 17, 0.1, -3, -4])
-        self.data_val = np.random.random_integers(-30, 30, size=100)
+        self.data_val = np.random.randint(-30, 30, size=100)
 
 
 args = Args()
@@ -93,6 +93,7 @@ class Toy:
     def __init__(self):
         # self.model = Net(1, 32, 16, 2).to(args.device) # input size=1, output size=2
         self.model = ToyCNN()
+        self.model = self.model.to(args.device)
         self.train_dataset = torchvision.datasets.MNIST('./datasets/', train=True, download=False,
                                     transform=torchvision.transforms.Compose([
                                         torchvision.transforms.ToTensor(),
@@ -110,7 +111,7 @@ class Toy:
         # self.val_dataset = Dataset_num(flag='val')
         # self.val_dataloader = DataLoader(dataset=self.val_dataset, batch_size=args.batch_size, shuffle=True)
 
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss().to(args.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr)  # , eps=1e-8)
 
     def train(self, prune=False, prune_module=None, prune_thres=0.05, prune_sparsity=0.5):
@@ -143,7 +144,7 @@ class Toy:
             
             if prune:
                 # self.simple_prune(thres=prune_thres)
-                self.structured_prune(module=prune_module, block_num=80, sparsity=prune_sparsity)
+                self.structured_prune(module=prune_module, block_num=16, sparsity=prune_sparsity)
                 
         self.save_model('./ckpts/mnist_cnn_model.pth')
         
@@ -200,7 +201,7 @@ class Toy:
         torch.save(self.model.state_dict(), path)
         
     def load_model(self, path):
-        self.model.load_state_dict(torch.load(path))
+        self.model.load_state_dict(torch.load(path), map_location=args.device)
         
     def simple_prune(self, module, thres):
         print('INFO: Pruning...')
@@ -242,7 +243,8 @@ class Toy:
                 element_mask[i][j] = 0 if (block_mask[i][block_id] == 0) else 1
         
         # 3. apply the mask
-        module.weight.data *= element_mask.float()
+        element_mask = element_mask.float().to(args.device) ## TODO
+        module.weight.data *= element_mask
         
 if __name__ == '__main__':
     g_seed = random.randint(0, 100)  # change seed for every program execution
@@ -273,15 +275,15 @@ if __name__ == '__main__':
     #     print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
     ################################################################
         
-    print('========== Prune with training ===========')
-    toy = Toy()
-    toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=0.5)
+    # print('========== Prune with training ===========')
+    # toy = Toy()
+    # toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=0.5)
     # acc_1, loss_1 = toy.eval()
     # acc_2, loss_2 = toy.eval()
     # print(acc_1, loss_1, acc_2, loss_2)
     
     ################ For Sweeping Pruning Params ##############    
-    for i in np.linspace(0.5, 1, 6):
+    for i in np.linspace(0.7, 1, 4):
         print('========== Prune with training ===========')
         print("Sparsity=%f"%i)
         toy = Toy()
