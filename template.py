@@ -9,7 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-
+import rank_functions
 
 seed = 42
 # torch.manual_seed(seed)
@@ -28,6 +28,12 @@ class Args:
         self.data_train = np.random.randint(-30, 30, size=100)
         # self.data_val = np.array([15, 16, 17, 0.1, -3, -4])
         self.data_val = np.random.randint(-30, 30, size=100)
+        self.prune_config = {
+            "module": None,
+            "scope": "local",
+            "block_num": 16,
+            "sparsity": 0.5
+        }
 
 
 args = Args()
@@ -114,7 +120,7 @@ class Toy:
         self.criterion = nn.CrossEntropyLoss().to(args.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr)  # , eps=1e-8)
 
-    def train(self, prune=False, prune_module=None, prune_thres=0.05, prune_sparsity=0.5):
+    def train(self, prune=False):
         for epoch in range(args.epochs):
             self.model.train()
             train_epoch_loss = []
@@ -138,14 +144,15 @@ class Toy:
             train_epochs_loss.append(np.average(train_epoch_loss))
             train_acc.append(100 * acc / nums)
             print("train acc = {:.3f}%, loss = {}".format(100 * acc / nums, np.average(train_epoch_loss)))
-        
+            
             if prune:
                 # self.simple_prune(thres=prune_thres)
-                self.structured_prune(module=prune_module, block_num=16, sparsity=prune_sparsity)
-            
+                print('INFO: pruning ...')
+                self.structured_prune(silent=True)        
+                       
             val_acc, val_loss = self.eval()
             print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
-                
+         
         self.save_model('./ckpts/mnist_cnn_model.pth')
         
     def eval(self):
@@ -212,43 +219,37 @@ class Toy:
         # print('Weight after pruning:')
         # print(module.weight.data)
         print('INFO: Finished pruning.')
-    
-    def structured_prune(self, module, block_num, sparsity=0.5, silent=True):
-        row, col = module.weight.data.shape
-        assert (col % block_num == 0), f"The weight is not divisible by {block_num}."
-        assert (sparsity <= 1 and sparsity >= 0)
+
+    def structured_prune(self, silent=True):
+        module = getattr(self.model, args.prune_config['module'])
+        data = module.weight.data
+        sparsity = args.prune_config['sparsity']
+
+        mask = rank_functions.block_rank_fn_local(data, args.prune_config, sparsity, silent=silent)
+        mask = mask.to(args.device)
         
-        block_size = int(col / block_num)
-        sparse_block_num = int(block_num*sparsity)
+        module = getattr(self.model, args.prune_config['module'])
+        module.weight.data *= mask
+
+
+           
+
         
-        # 1. create a block-level mask
-        block_mask = torch.ones((row, block_num))
-        
-        random.seed(g_seed)
-        for i in range(row):
-            # randomly pick sparse_block_num blocks for each layer
-            picked_block_ids = random.sample(list(range(block_num)), sparse_block_num)
-            # nullify the picked blocks
-            for block_id in picked_block_ids:
-                block_mask[i][block_id] = 0
-        if not silent:
-            print('Generated block-level mask:')
-            print(block_mask)
-        
-        # 2. transform block_mask into an elementwise mask
-        element_mask = torch.ones((row, col))
-        for i in range(row):
-            for j in range(col):
-                block_id = j // block_size
-                element_mask[i][j] = 0 if (block_mask[i][block_id] == 0) else 1
-        
-        # 3. apply the mask
-        element_mask = element_mask.float().to(args.device) ## TODO
-        module.weight.data *= element_mask
+
         
 if __name__ == '__main__':
     g_seed = random.randint(0, 100)  # change seed for every program execution
     
+    toy = Toy()
+    
+
+    args.prune_config = {
+            "module": toy.model.fc1,
+            "scope": "local",
+            "block_num": 16,
+            "sparsity": 0.5
+    }
+
     # toy = Toy()
     # # # toy.train(prune=False)
     # toy.load_model('./ckpts/mnist_cnn_model.pth')
@@ -283,10 +284,17 @@ if __name__ == '__main__':
     # print(acc_1, loss_1, acc_2, loss_2)
     
     ################ For Sweeping Pruning Params ##############    
-    for i in np.linspace(0.7, 1, 4):
+    for i in np.linspace(0.8, 1, 3):
+    # for i in [0.9, 1]:
         print('========== Prune with training ===========')
         print("Sparsity=%f"%i)
         toy = Toy()
-        toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=i)
+        args.prune_config = {
+            "module": 'fc1',
+            "scope": "local",
+            "block_num": 16,
+            "sparsity": i
+        }
+        toy.train(prune=True)
     ################################################################
         
