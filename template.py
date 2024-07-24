@@ -139,12 +139,12 @@ class Toy:
             train_acc.append(100 * acc / nums)
             print("train acc = {:.3f}%, loss = {}".format(100 * acc / nums, np.average(train_epoch_loss)))
         
-            val_acc, val_loss = self.eval()
-            print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
-            
             if prune:
                 # self.simple_prune(thres=prune_thres)
                 self.structured_prune(module=prune_module, block_num=16, sparsity=prune_sparsity)
+            
+            val_acc, val_loss = self.eval()
+            print("epoch = {}, valid acc = {:.2f}%, loss = {}".format(epoch, val_acc, val_loss))
                 
         self.save_model('./ckpts/mnist_cnn_model.pth')
         
