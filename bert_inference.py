@@ -15,10 +15,12 @@ class Dataset(torch.utils.data.Dataset):
 
         return text, label
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 dataset = Dataset('train')
 # len(dataset), dataset[0]
 token = BertTokenizer.from_pretrained('bert-base-chinese')
 pretrained = BertModel.from_pretrained('bert-base-chinese')
+pretrained.to(device)
 # pretrained = BertModel.from_pretrained('tmp')  # local checkpoint
 #不训练,不需要计算梯度
 for param in pretrained.parameters():
@@ -38,11 +40,10 @@ def collate_fn(data):
 
     #input_ids:编码之后的数字
     #attention_mask:是补零的位置是0,其他位置是1
-    input_ids = data['input_ids']
-    attention_mask = data['attention_mask']
-    token_type_ids = data['token_type_ids']
-    labels = torch.LongTensor(labels)
-
+    input_ids = data['input_ids'].to(device)
+    attention_mask = data['attention_mask'].to(device)
+    token_type_ids = data['token_type_ids'].to(device)
+    labels = torch.LongTensor(labels).to(device)
     #print(data['length'], data['length'].max())
 
     return input_ids, attention_mask, token_type_ids, labels
@@ -89,6 +90,7 @@ class DownstreamModel(torch.nn.Module):
 
 
 model = DownstreamModel()
+model.to(device)
 # model(input_ids=input_ids,
 #       attention_mask=attention_mask,
 #       token_type_ids=token_type_ids).shape
