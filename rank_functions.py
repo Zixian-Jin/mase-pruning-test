@@ -4,10 +4,15 @@ import numpy as np
 
 
 
-def block_lp_norm(block: torch.Tensor, p:float):
+def block_mixed_norm(block: torch.Tensor):
     # for max norm: p = float('inf')
-    return block.norm(p)
+    norm_factors = {"l1":1, "l2":0, "exp": 0, "inf":0}
+    norms = [block.norm(1.0), block.norm(2.0), block_exp_norm(block), block.norm(float('inf'))]
+    return torch.dot(torch.Tensor(list(norm_factors.values())), torch.Tensor(norms))  # weighted sum of different norms
 
+
+def block_exp_norm(block: torch.Tensor):
+    return block.exp().sum()/block.shape[-1]  # TODO: dim
 
 def get_block_mask_local(data: torch.Tensor, config: dict, sparsity: float) -> torch.Tensor:
     '''
@@ -26,7 +31,7 @@ def get_block_mask_local(data: torch.Tensor, config: dict, sparsity: float) -> t
     for i in range(data_row):  # row-wise scope for local sparsification
         # 1. get block-wise norms
         for b_id in range(block_num):
-            block_norms[i, b_id] = block_lp_norm(data[i, block_size*b_id : block_size*(b_id+1)], 2)  # get the norm of a sliced block tensor
+            block_norms[i, b_id] = block_mixed_norm(data[i, block_size*b_id : block_size*(b_id+1)])  # get the norm of a sliced block tensor
         # 2. rank blocks
         local_thres = torch.quantile(block_norms[i], sparsity)
         # 3. set block mask

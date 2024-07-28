@@ -1,5 +1,11 @@
-1. Use more complicated networks
+1. [DONE] Use more complicated networks
 2. Finish forward structured pruning
-3. Register backward pruning
+3. [DONE] Register backward pruning
 4. PyTorch build-in prune functions
 5. mase pruning transforms: consider both W & IA sparsity
+6. Compare random block-wise pruning with l1-norm block-wise pruning
+7. TPE
+8. Add hardware cost to pruning
+9. Can you beat Nvidia 2:4 sparsity?
+10. Is global pruning necessary?
+11. Transformer Concepts: (1) cross attention (2) masked self-attention  (3) multi-head attention
