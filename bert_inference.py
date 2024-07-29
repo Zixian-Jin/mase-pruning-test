@@ -197,11 +197,11 @@ class DownstreamModel(torch.nn.Module):
         for layer in layer_list:
             for weight in weight_list:
                 if weight == 'Q':
-                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.query)
+                    modules_to_prune.append(self.pretrained.encoder.layer._modules[str(layer)].attention.self.query)
                 elif weight == 'K':
-                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.key)
+                    modules_to_prune.append(self.pretrained.encoder.layer._modules[str(layer)].attention.self.key)
                 elif weight == 'V':
-                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.value)
+                    modules_to_prune.append(self.pretrained.encoder.layer._modules[str(layer)].attention.self.value)
                 else:
                     print('WARNING: Invalid pruned weight has been ignored.')
         
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     model = DownstreamModel()
     model.to(device)
     # prune_config['module'] = "fc1"
-    module = model.encoder.layer._modules['0'].attention.self.query.weight.detach()
+    module = model.pretrained.encoder.layer._modules['0'].attention.self.query.weight.detach()
     # model.downstream_train()
     
     model.load_downstream_model()
