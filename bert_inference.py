@@ -1,7 +1,11 @@
 import torch
+import numpy as np
 from datasets import load_dataset
 from transformers import BertTokenizer, BertModel, AdamW
 from torch.utils.data import DataLoader, Dataset
+
+import utils
+import rank_functions
 
 class BertDataset(Dataset):
     def __init__(self, split):
@@ -26,7 +30,7 @@ class BertDataset(Dataset):
 # out.last_hidden_state.shape
 
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu' # TODO
+
 
 
 
@@ -98,12 +102,12 @@ class DownstreamModel(torch.nn.Module):
         return out
 
     def downstream_train(self):
-        optimizer = AdamW(model.parameters(), lr=5e-4)
+        optimizer = AdamW(self.parameters(), lr=5e-4)
         criterion = torch.nn.CrossEntropyLoss()
 
-        model.train()
+        self.train()
         for i, (input_ids, attention_mask, token_type_ids, labels) in enumerate(self.train_dataloader):
-            out = model(input_ids=input_ids,
+            out = self(input_ids=input_ids,
                         attention_mask=attention_mask,
                         token_type_ids=token_type_ids)
             loss = criterion(out, labels)
@@ -119,25 +123,56 @@ class DownstreamModel(torch.nn.Module):
                 break
         
     def downstream_test(self):
-        model.eval()
+        self.eval()
         correct = 0
         total = 0
-
-        for i, (input_ids, attention_mask, token_type_ids,
-                labels) in enumerate(self.val_dataloader):
-            if i == 5:
-                break
-            print(i)
-            with torch.no_grad():
-                out = model(input_ids=input_ids,
+        
+        with torch.no_grad():
+            for i, (input_ids, attention_mask, token_type_ids,
+                    labels) in enumerate(self.val_dataloader):
+                if i == 5: break
+                out = self(input_ids=input_ids,
                             attention_mask=attention_mask,
                             token_type_ids=token_type_ids)
+                out = out.argmax(dim=1)
+                correct += (out == labels).sum().item()
+                total += len(labels)
+        acc = 100 * correct / total
+        return acc
 
-            out = out.argmax(dim=1)
-            correct += (out == labels).sum().item()
-            total += len(labels)
-        print(correct / total)
+    def check_sparsity(self, module):
+        w = module.weight.data
+        # print(w)
+        thres = 0.05
+        for thres in np.linspace(0.00, 0.20, 11):
+            mask = torch.where(torch.abs(w)<thres, 1, 0)
+            print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
+        
+        values, indicies = utils.matrix_profiler(w, rank=0.1, scope='local')
+        print('Top 10% elements in the analysed matrix:')
+        print('Values=', values)
+        print('Indicies=', indicies)
+        
+    def simple_prune(self, module, thres):
+        print('INFO: Pruning...')
+        # print('Weight before pruning:')
+        # print(module.weight.data)
+        mask = (torch.abs(module.weight.data) >= thres)
+        module.weight.data *= mask.float()
+        # print('Weight after pruning:')
+        # print(module.weight.data)
+        print('INFO: Finished pruning.')
 
+    def structured_prune(self, module, silent=True):
+        print('INFO: Pruning...')
+        # module = getattr(self, prune_config['module'])
+        data = module.weight.data
+        sparsity = prune_config['sparsity']
+
+        mask = rank_functions.block_rank_fn_local(data, prune_config, sparsity, silent=silent)
+        mask = mask.to(device)
+        module.weight.data *= mask
+        print('INFO: Finished pruning.')
 
 # model(input_ids=input_ids,
 #       attention_mask=attention_mask,
@@ -146,7 +181,17 @@ class DownstreamModel(torch.nn.Module):
 
 
 if __name__ == '__main__':
+    device = 'cuda' if torch.cuda.is_available() else 'cpu' # TODO
+    prune_config = {
+            "module": None,
+            "scope": "local",
+            "block_num": 64,
+            "sparsity": 0.5
+    }
     model = DownstreamModel()
     model.to(device)
-    model.downstream_train()
+    prune_config['module'] = "fc1"
+    # model.downstream_train()
+    model.check_sparsity(module=model.fc1)
+    model.structured_prune(module=model.fc1)
     model.downstream_test()
