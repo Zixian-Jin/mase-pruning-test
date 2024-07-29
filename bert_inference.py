@@ -121,6 +121,7 @@ class DownstreamModel(torch.nn.Module):
                 print(i, loss.item(), accuracy)
             if i == 300:
                 break
+        self.save_downstream_model()
         
     def downstream_test(self):
         self.eval()
@@ -140,6 +141,15 @@ class DownstreamModel(torch.nn.Module):
         acc = 100 * correct / total
         return acc
 
+    def save_downstream_model(self, p='./downstream_model_unpruned.pth'):
+        state_dict = self.state_dict()
+        selected_params = {k: v for k, v in state_dict.items() if ('fc1' in k or 'fc2' in k)}
+        torch.save(selected_params, p)
+    
+    def load_downstream_model(self, p='./downstream_model_unpruned.pth'):
+        downstream_params = torch.load(p)
+        model.load_state_dict(downstream_params, strict=False)
+    
     def check_sparsity(self, module):
         w = module.weight.data
         # print(w)
@@ -191,21 +201,24 @@ if __name__ == '__main__':
     model = DownstreamModel()
     model.to(device)
     prune_config['module'] = "fc1"
-    # model.downstream_train()
+    
+    model.downstream_train()
+    
+    model.load_downstream_model()
     model.check_sparsity(module=model.fc1)
     acc_1 = model.downstream_test()
     
     # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98]:
     for i in [0.6, 0.7]:
-        # toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
+        model.load_downstream_model()
         print('========== Prune after training ===========')
         print("Sparsity=%f"%i)
-        # prune_config = {
-        #     "module": 'fc1',
-        #     "scope": "local",
-        #     "block_num": 16,
-        #     "sparsity": i
-        # }
+        prune_config = {
+            "module": 'fc1',
+            "scope": "local",
+            "block_num": 16,
+            "sparsity": i
+        }
         model.structured_prune(module=model.fc1)
         acc_2 = model.downstream_test()
         print(f"Before pruning: acc={acc_1}. After pruning: acc={acc_2}.")
