@@ -131,7 +131,7 @@ class DownstreamModel(torch.nn.Module):
         with torch.no_grad():
             for i, (input_ids, attention_mask, token_type_ids,
                     labels) in enumerate(self.val_dataloader):
-                if i == 50: break
+                if i == 30: break
                 out = self(input_ids=input_ids,
                             attention_mask=attention_mask,
                             token_type_ids=token_type_ids)
@@ -187,10 +187,26 @@ class DownstreamModel(torch.nn.Module):
         module.weight.data *= mask
         print('INFO: Finished pruning.')
 
-# model(input_ids=input_ids,
-#       attention_mask=attention_mask,
-#       token_type_ids=token_type_ids).shape
-
+    def bert_attention_prune(self, layer_list, weight_list):
+        '''
+            Ex. layer_list = [0, 1, 3]
+            weight_list = ['Q', 'K']
+        '''
+        modules_to_prune = []
+        
+        for layer in layer_list:
+            for weight in weight_list:
+                if weight == 'Q':
+                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.query)
+                elif weight == 'K':
+                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.key)
+                elif weight == 'V':
+                    modules_to_prune.append(self.encoder.layer._modules[str(layer)].attention.self.value)
+                else:
+                    print('WARNING: Invalid pruned weight has been ignored.')
+        
+        for module in modules_to_prune:
+            self.structured_prune(module)
 
 
 if __name__ == '__main__':
@@ -203,16 +219,19 @@ if __name__ == '__main__':
     }
     model = DownstreamModel()
     model.to(device)
-    prune_config['module'] = "fc1"
-    
+    # prune_config['module'] = "fc1"
+    module = model.encoder.layer._modules['0'].attention.self.query.weight.detach()
     # model.downstream_train()
     
     model.load_downstream_model()
     model.check_sparsity(module=model.fc1)
     acc_1 = model.downstream_test()
     
-    for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98, 1.00]:
-    # for i in [0.6, 0.7]:
+    layers_to_prune = list(range(12))
+    weights_to_prune = ['Q']
+    
+    # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98, 1.00]:
+    for i in [0.9, 0.95, 0.98, 1.00]:
         print('========== Prune after training ===========')
         model.load_downstream_model()
         print("Sparsity=%f"%i)
@@ -222,7 +241,8 @@ if __name__ == '__main__':
             "block_num": 16,
             "sparsity": i
         }
-        model.structured_prune(module=model.fc1)
+        # model.structured_prune(module=model.fc1)
+        model.bert_attention_prune(layers_to_prune, weights_to_prune)
         acc_2 = model.downstream_test()
         print(f"Before pruning: acc={acc_1}. After pruning: acc={acc_2}.")
 
