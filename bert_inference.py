@@ -161,10 +161,10 @@ class DownstreamModel(torch.nn.Module):
             mask = torch.where(torch.abs(w)<thres, 1, 0)
             print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
         
-        values, indicies = utils.matrix_profiler(w, rank=0.1, scope='local')
-        print('Top 10% elements in the analysed matrix:')
-        print('Values=', values)
-        print('Indicies=', indicies)
+        # values, indicies = utils.matrix_profiler(w, rank=0.1, scope='local')
+        # print('Top 10% elements in the analysed matrix:')
+        # print('Values=', values)
+        # print('Indicies=', indicies)
         
     def simple_prune(self, module, thres):
         print('INFO: Pruning...')
@@ -224,21 +224,25 @@ if __name__ == '__main__':
     # model.downstream_train()
     
     model.load_downstream_model()
-    model.check_sparsity(module=model.fc1)
+    # model.check_sparsity(module=model.fc1)
     acc_1 = model.downstream_test()
     
-    layers_to_prune = list(range(12))
-    weights_to_prune = ['Q']
+    layers_to_prune = [2, 4, 6, 8, 10]  # list(range(12))
+    weights_to_prune = ['Q', 'K', 'V']
     
-    # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98, 1.00]:
-    for i in [0.9, 0.95, 0.98, 1.00]:
+    print('Pruing Configuraitons:')
+    print('Block_num=', prune_config['block_num'])
+    print('Layers to prune=', layers_to_prune)
+    print('Weights to prune=', weights_to_prune)
+    for i in [0.5, 0.6, 0.7, 0.8]: # 0.9, 0.92, 0.95, 0.98, 1.00]:
+    # for i in [0.9, 0.95, 0.98, 1.00]:
         print('========== Prune after training ===========')
         model.load_downstream_model()
         print("Sparsity=%f"%i)
         prune_config = {
             "module": 'fc1',
             "scope": "local",
-            "block_num": 16,
+            "block_num": 64,
             "sparsity": i
         }
         # model.structured_prune(module=model.fc1)

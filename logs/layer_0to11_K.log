@@ -1,0 +1,188 @@
+Script started on 2024-07-29 08:29:37+01:00 [TERM="screen" TTY="/dev/pts/41" COLUMNS="120" LINES="47"]
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h[cj323@ee-kraken mase-pruning-test]$ ocnda c[K[K[K[K[K[K[Kconda activate mase
+[?2004lkcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ python mase[K[K[K[Kbert_inference.py 
+[?2004lA parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Pruing Configuraitons:
+Block_num= 64
+Layers to prune= [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+Weights to prune= ['K']
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.500000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=87.5. After pruning: acc=88.22916666666667.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.600000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=87.5. After pruning: acc=84.79166666666667.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.700000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=87.5. After pruning: acc=74.89583333333333.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.800000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+^CTraceback (most recent call last):
+  File "/mnt/home/cj323/mase-pruning-test/bert_inference.py", line 249, in <module>
+    model.bert_attention_prune(layers_to_prune, weights_to_prune)
+  File "/mnt/home/cj323/mase-pruning-test/bert_inference.py", line 209, in bert_attention_prune
+    self.structured_prune(module)
+  File "/mnt/home/cj323/mase-pruning-test/bert_inference.py", line 185, in structured_prune
+    mask = rank_functions.block_rank_fn_local(data, prune_config, sparsity, silent=silent)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/home/cj323/mase-pruning-test/rank_functions.py", line 56, in block_rank_fn_local
+    block_mask = get_block_mask_local(data, config, sparsity)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/home/cj323/mase-pruning-test/rank_functions.py", line 34, in get_block_mask_local
+    block_norms[i, b_id] = block_mixed_norm(data[i, block_size*b_id : block_size*(b_id+1)])  # get the norm of a sliced block tensor
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/home/cj323/mase-pruning-test/rank_functions.py", line 10, in block_mixed_norm
+    norms = [block.norm(1.0), block.norm(2.0), block_exp_norm(block), block.norm(float('inf'))]
+             ^^^^^^^^^^^^^^^
+  File "/mnt/home/cj323/lib/conda/envs/mase/lib/python3.12/site-packages/torch/_tensor.py", line 765, in norm
+    return torch.norm(self, p, dim, keepdim, dtype=dtype)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/home/cj323/lib/conda/envs/mase/lib/python3.12/site-packages/torch/functional.py", line 1631, in norm
+    return torch.linalg.vector_norm(input, _p, _dim, keepdim, dtype=dtype)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ ^C[?2004l[?2004h[?2004l
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ ^C[?2004l[?2004h[?2004l
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ nano [K[K[K[K[Kexit
+[?2004lexit
+
+Script done on 2024-07-29 08:40:26+01:00 [COMMAND_EXIT_CODE="130"]

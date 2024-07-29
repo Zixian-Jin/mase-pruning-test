@@ -1,0 +1,109 @@
+Script started on 2024-07-29 08:10:07+01:00 [TERM="screen" TTY="/dev/pts/41" COLUMNS="120" LINES="39"]
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h[cj323@ee-kraken mase-pruning-test]$ conda activate mase
+[?2004lkcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ python be[K[K[K[K[K[K[K[K[Knano bert_inference.py 
+[?2004l[?2004h(B)0[?1049h[1;39r[m[4l[39;49m[?1h=[?1h=[?25l[39;49m[m[H[J[37;54H[0;7m[ Reading... ][m[37;52H[0;7m[ Read 252 lines ][m[H[0;7m  GNU nano 5.6.1                                      bert_inference.py                                                 [1;119H[m[38d[0;7m^G[m Help[38;16H[0;7m^O[m Write Out   [0;7m^W[m Where Is    [0;7m^K[m Cut[38;61H[0;7m^T[m Execute     [0;7m^C[m Location    [0;7mM-U[m Undo	 [0;7mM-A[m Set Mark[39d[0;7m^X[m Exit[39;16H[0;7m^R[m Read File   [0;7m^\[m Replace     [0;7m^U[m Paste[61G[0;7m^J[m Justify     [0;7m^_[m Go To Line  [0;7mM-E[m Redo	 [0;7mM-6[m Copy[2d[0;1m[36mimport[39m[m torch[3d[0;1m[36mimport[39m[m numpy [0;1m[36mas[39m[m np[4d[0;1m[36mfrom[39m[m datasets [0;1m[36mimport[39m[m load_dataset[5d[0;1m[36mfrom[39m[m transformers [0;1m[36mimport[39m[m BertTokenizer, BertModel, AdamW[6d[0;1m[36mfrom[39m[m torch.utils.data [0;1m[36mimport[39m[m DataLoader, Dataset[8d[0;1m[36mimport[39m[m utils[9d[0;1m[36mimport[39m[m rank_functions[11d[0;1m[36mclass[39m[m BertDataset(Dataset):[12;5H[0;1m[36mdef[34m __init__[39m[m(self, split):[13;9Hself.dataset = load_dataset(path=[0;1m[32m'lansinuote/ChnSentiCorp'[39m[m, split=split)[15;5H[0;1m[36mdef[34m __len__[39m[m(self):[16;9H[0;1m[36mreturn[39m[m len(self.dataset)[18;5H[0;1m[36mdef[34m __getitem__[39m[m(self, i):[19;9Htext = self.dataset[i][[0;1m[32m'text'[39m[m][20;9Hlabel = self.dataset[i][[0;1m[32m'label'[39m[m][21;9H[0;1m[36mreturn[39m[m text, label[24d[42m    [25d[0;1m[31m# print(len(loader))[26d# input_ids.shape, attention_mask.shape, token_type_ids.shape, labels[27d#模型试算[28d# out = pretrained(input_ids=input_ids,[29d#            attention_mask=attention_mask,[30d#            token_type_ids=token_type_ids)[31d# out.last_hidden_state.shape[2d[39m[m[34h[?25h[?25l[38;16H         [0;7mM-C[m Case Sens           [0;7mM-B[m Backwards           [0;7m^P[m Older                [0;7m^T[m Go To Line[K[39;2H[0;7mC[m Cancel[16G         [0;7mM-R[m Reg.exp.            [0;7m^R[m Replace              [0;7m^N[m Newer[K[38;110HM[0;7mSearch:                                                                                                                 [37;9H[m[34h[?25h[?25l[0;7ml[m[34h[?25h[?25l[0;7ma[m[34h[?25h[?25l[0;7my[m[34h[?25h[?25l[0;7me[m[34h[?25h[?25l[0;7mr[m[34h[?25h[?25l[0;7ms[m[34h[?25h[?25l[0;7m_[m[34h[?25h[?25l[0;7mt[m[34h[?25h[?25l[0;7mo[m[34h[?25h[?25l[K[38;16H[0;7m^O[m Write Out   [0;7m^W[m Where Is    [0;7m^K[m Cut         [0;7m^T[m Execute     [0;7m^C[m Location    [0;7mM-U[m Undo       [0;7mM-A[m Set Mark[39;2H[0;7mX[m Exit  [16G[0;7m^R[m Read File   [0;7m^\[m Replace     [0;7m^U[m Paste       [0;7m^J[m Justify     [0;7m^_[m Go To Line  [0;7mM-E[m Redo	 [0;7mM-6[m Copy[2d    device = [0;1m[32m'cuda'[39m[m [0;1m[36mif[39m[m torch.cuda.is_available() [0;1m[36melse[39m[m [0;1m[32m'cpu'[31m # [37m[43mTODO[3d[39;49m[m    prune_config = {[4;12H[1K [0;1m[32m"module"[39m[m: [0;1m[35mNone[39m[m,[K[5;12H[1K [0;1m[32m"scope"[39m[m: [0;1m[32m"local"[39m[m,[K[6;12H[1K [0;1m[32m"block_num"[39m[m: 64,[K[7;13H[0;1m[32m"sparsity"[39m[m: 0.5[8d    }[K[9d    model = DownstreamModel()[10;5Hmodel.to(device)[11d   [0;1m[31m # prune_config['module'] = "fc1"[12;5H[39m[mmodule = model.pretrained.encoder.layer._modules[[0;1m[32m'0'[39m[m].attention.self.query.weight.detach()[13;4H[0;1m[31m # model.downstream_train()[39m[m[K[14d[42m    [15d[49m[mmodel.load_downstream_model()[16;4H[0;1m[31m # model.check_sparsity(module=model.fc1)[17;5H[39m[macc_1 = model.downstream_test()[18d[42m    [49m[m[K[19d[30m[43mlayers_to[39;49m[m_prune = [3][0;1m[31m # list(range(12))[20;5H[39m[mweights_to_prune = [[0;1m[32m'Q'[39m[m, [0;1m[32m'K'[39m[m, [0;1m[32m'V'[39m[m][K[21d[42m    [49m[m[K[22dprint([0;1m[32m'Pruing Configuraitons:'[39m[m)[23;5Hprint([0;1m[32m'Block_num='[39m[m, prune_config[[0;1m[32m'block_num'[39m[m])[24d    print([0;1m[32m'Layers to prune='[39m[m, layers_to_prune)[25d    print([0;1m[32m'Weights to prune='[39m[m, weights_to_prune)[26d   [0;1m[31m # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98, 1.00]:[39m[m[K[27d    [0;1m[36mfor[39m[m i [0;1m[36min[39m[m [0.9, 0.95, 0.98, 1.00]:[28;8H[1K	print([0;1m[32m'========== Prune after training ==========='[39m[m)[29;8H[1K	model.load_downstream_model()[K[30;8H[1K	print([0;1m[32m"Sparsity=%f"[39m[m%i)[K[31;8H[1K	prune_config = {[K[32;13H[0;1m[32m"module"[39m[m: [0;1m[32m'fc1'[39m[m,[33;13H[0;1m[32m"scope"[39m[m: [0;1m[32m"local"[39m[m,[34;13H[0;1m[32m"block_num"[39m[m: 64,[35;13H[0;1m[32m"sparsity"[39m[m: i[36;9H}[19;5Hlayers_to[6G[34h[?25h[?25la[34h[?25h[?25ly[34h[?25h[?25l	[34h[?25h[?25lr[34h[?25h[?25ls[34h[?25h[?25l_[34h[?25h[?25lt[34h[?25h[?25lo[34h[?25h[?25l_[34h[?25h[?25lp[34h[?25h[?25l	[34h[?25h[?25lu[34h[?25h[?25ln[34h[?25h[?25le[34h[?25h[?25l [34h[?25h[?25l=[34h[?25h[?25l [34h[?25h[?25l[[34h[?25h[?25l	[34h[?25h[?25l][34h[?25h[?25l[C[34h[?25h[?25l[34h[?25h[?25l[Z[34h[?25h[?25l[1;111H[0;7mModified[m[19;24H[1P[34h[?25h[?25l5][0;1m[31m # list(range(12))[19;25H[39m[m[34h[?25h[?25l[1P[34h[?25h[?25l1][0;1m[31m # list(range(12))[19;25H[39m[m[34h[?25h[?25l11][0;1m[31m # list(range(12))[19;26H[39m[m[34h[?25h[?25l[37d[0;7mSave modified buffer?                                                                                                   [38;1H Y[m Yes[K[39d[0;7m N[m No  [39;16H [0;7m^C[m Cancel[K[37;23H[34h[?25h[?25l[38d[0;7m^G[m Help[38;31H[0;7mM-D[m DOS Format[38;61H[0;7mM-A[m Append[38;91H[0;7mM-B[m Backup File[39d[0;7m^C[m Cancel	              [0;7mM-M[m Mac Format[39;61H[0;7mM-P[m Prepend[39;91H[0;7m^T[m BrowseMM[0;7mFile Name to Write: bert_inference.py[m[34h[?25h[?25l[37;53H[1K [0;7m[ Writing... ][m[K[1;111H[0;7m        [m[37;51H[0;7m[ Wrote 252 lines ][m[J[39d[34h[?25h[39;1H[?1049l[?1l>[?2004lkcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ 
+[?2004lkcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ 
+[?2004lkcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ python bert_inference.py 
+[?2004lA parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+A parameter name that contains `beta` will be renamed internally to `bias`. Please use a different name to suppress this warning.
+A parameter name that contains `gamma` will be renamed internally to `weight`. Please use a different name to suppress this warning.
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Pruing Configuraitons:
+Block_num= 64
+Layers to prune= [11]
+Weights to prune= ['Q', 'K', 'V']
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.900000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=88.02083333333333. After pruning: acc=87.60416666666667.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.950000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=88.02083333333333. After pruning: acc=87.1875.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=0.980000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=88.02083333333333. After pruning: acc=88.02083333333333.
+========== Prune after training ===========
+INFO: loaded downstream model from ./ckpts/downstream_model_unpruned.pth
+Sparsity=1.000000
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+INFO: Pruning...
+INFO: Finished pruning.
+Before pruning: acc=88.02083333333333. After pruning: acc=87.29166666666667.
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ xit
+[?2004lbash: xit: command not found
+kcj323@ee-kraken:~/mase-pruning-test\[?2004h(mase) [cj323@ee-kraken mase-pruning-test]$ exit
+[?2004lexit
+
+Script done on 2024-07-29 08:15:36+01:00 [COMMAND_EXIT_CODE="127"]
