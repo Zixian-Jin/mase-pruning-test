@@ -130,7 +130,7 @@ class DownstreamModel(torch.nn.Module):
         with torch.no_grad():
             for i, (input_ids, attention_mask, token_type_ids,
                     labels) in enumerate(self.val_dataloader):
-                if i == 5: break
+                if i == 50: break
                 out = self(input_ids=input_ids,
                             attention_mask=attention_mask,
                             token_type_ids=token_type_ids)
@@ -193,5 +193,20 @@ if __name__ == '__main__':
     prune_config['module'] = "fc1"
     # model.downstream_train()
     model.check_sparsity(module=model.fc1)
-    model.structured_prune(module=model.fc1)
-    model.downstream_test()
+    acc_1 = model.downstream_test()
+    
+    # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98]:
+    for i in [0.6, 0.7]:
+        # toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
+        print('========== Prune after training ===========')
+        print("Sparsity=%f"%i)
+        # prune_config = {
+        #     "module": 'fc1',
+        #     "scope": "local",
+        #     "block_num": 16,
+        #     "sparsity": i
+        # }
+        model.structured_prune(module=model.fc1)
+        acc_2 = model.downstream_test()
+        print(f"Before pruning: acc={acc_1}. After pruning: acc={acc_2}.")
+
