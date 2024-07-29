@@ -141,20 +141,23 @@ class DownstreamModel(torch.nn.Module):
         acc = 100 * correct / total
         return acc
 
-    def save_downstream_model(self, p='./downstream_model_unpruned.pth'):
+    def save_downstream_model(self, p='./ckpts/downstream_model_unpruned.pth'):
         state_dict = self.state_dict()
         selected_params = {k: v for k, v in state_dict.items() if ('fc1' in k or 'fc2' in k)}
         torch.save(selected_params, p)
-    
-    def load_downstream_model(self, p='./downstream_model_unpruned.pth'):
+        print('INFO: saved downstream model to %s'%p)
+
+    def load_downstream_model(self, p='./ckpts/downstream_model_unpruned.pth'):
         downstream_params = torch.load(p)
         model.load_state_dict(downstream_params, strict=False)
-    
+        print('INFO: loaded downstream model from %s'%p)
+
     def check_sparsity(self, module):
         w = module.weight.data
         # print(w)
         thres = 0.05
-        for thres in np.linspace(0.00, 0.20, 11):
+        max_val = w.abs().max().item()
+        for thres in np.linspace(0.00, max_val, 10):
             mask = torch.where(torch.abs(w)<thres, 1, 0)
             print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
         
@@ -202,16 +205,16 @@ if __name__ == '__main__':
     model.to(device)
     prune_config['module'] = "fc1"
     
-    model.downstream_train()
+    # model.downstream_train()
     
     model.load_downstream_model()
     model.check_sparsity(module=model.fc1)
     acc_1 = model.downstream_test()
     
-    # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98]:
-    for i in [0.6, 0.7]:
-        model.load_downstream_model()
+    for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98, 1.00]:
+    # for i in [0.6, 0.7]:
         print('========== Prune after training ===========')
+        model.load_downstream_model()
         print("Sparsity=%f"%i)
         prune_config = {
             "module": 'fc1',
