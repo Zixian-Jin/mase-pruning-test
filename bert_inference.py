@@ -177,7 +177,8 @@ class DownstreamModel(torch.nn.Module):
         print('INFO: Finished pruning.')
 
     def structured_prune(self, module, silent=True):
-        print('INFO: Pruning...')
+        if not silent:
+            print('INFO: Pruning...')
         # module = getattr(self, prune_config['module'])
         data = module.weight.data
         sparsity = prune_config['sparsity']
@@ -185,7 +186,8 @@ class DownstreamModel(torch.nn.Module):
         mask = rank_functions.block_rank_fn_local(data, prune_config, sparsity, silent=silent)
         mask = mask.to(device)
         module.weight.data *= mask
-        print('INFO: Finished pruning.')
+        if not silent:
+            print('INFO: Finished pruning.')
 
     def bert_attention_prune(self, layer_list, weight_list):
         '''
@@ -202,12 +204,15 @@ class DownstreamModel(torch.nn.Module):
                     modules_to_prune.append(self.pretrained.encoder.layer._modules[str(layer)].attention.self.key)
                 elif weight == 'V':
                     modules_to_prune.append(self.pretrained.encoder.layer._modules[str(layer)].attention.self.value)
+                elif weight == 'W1':
+                    modules_to_prune.append(self.fc1)
+                elif weight == 'W2':
+                    modules_to_prune.append(self.fc2)
                 else:
                     print('WARNING: Invalid pruned weight has been ignored.')
         
         for module in modules_to_prune:
             self.structured_prune(module)
-
 
 if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu' # TODO
@@ -219,34 +224,91 @@ if __name__ == '__main__':
     }
     model = DownstreamModel()
     model.to(device)
-    # prune_config['module'] = "fc1"
-    module = model.pretrained.encoder.layer._modules['0'].attention.self.query.weight.detach()
-    # model.downstream_train()
     
     model.load_downstream_model()
     # model.check_sparsity(module=model.fc1)
-    acc_1 = model.downstream_test()
     
-    layers_to_prune = [2, 4, 6, 8, 10]  # list(range(12))
+    
+    base_sparsity = 0.5
+    outstanding_sparsity = 0.6
+    outstanding_layer = 1
     weights_to_prune = ['Q', 'K', 'V']
     
     print('Pruing Configuraitons:')
     print('Block_num=', prune_config['block_num'])
-    print('Layers to prune=', layers_to_prune)
+    # print('Layers to prune=', layers_to_prune)
     print('Weights to prune=', weights_to_prune)
-    for i in [0.5, 0.6, 0.7, 0.8]: # 0.9, 0.92, 0.95, 0.98, 1.00]:
-    # for i in [0.9, 0.95, 0.98, 1.00]:
+    
+    
+    for outstanding_layer in range(12):
         print('========== Prune after training ===========')
+        model.__init__()
         model.load_downstream_model()
-        print("Sparsity=%f"%i)
-        prune_config = {
-            "module": 'fc1',
-            "scope": "local",
-            "block_num": 64,
-            "sparsity": i
-        }
-        # model.structured_prune(module=model.fc1)
-        model.bert_attention_prune(layers_to_prune, weights_to_prune)
-        acc_2 = model.downstream_test()
-        print(f"Before pruning: acc={acc_1}. After pruning: acc={acc_2}.")
+        
+        for outstanding_sparsity in [0.5, 0.6, 0.7, 0.8]:
+            print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
+            # Step 1: prune all layers with base sparsity
+            prune_config = {
+                "module": 'fc1',
+                "scope": "local",
+                "block_num": 64,
+                "sparsity": base_sparsity
+            }
+            model.bert_attention_prune([list(range(12))], weights_to_prune)
+            acc_1 = model.downstream_test()
+
+            # Step 2: prune the outstanding layer with outstanding sparsity
+            prune_config = {
+                "module": 'fc1',
+                "scope": "local",
+                "block_num": 64,
+                "sparsity": outstanding_sparsity
+            }        
+            model.bert_attention_prune([outstanding_layer], weights_to_prune)
+            
+            acc_2 = model.downstream_test()
+            print(f"Report: Outstanding layer={outstanding_layer}. After base pruning: acc={acc_1}. After outstanding pruning: acc={acc_2}.")
+
+
+
+# if __name__ == '__main__':
+#     device = 'cuda' if torch.cuda.is_available() else 'cpu' # TODO
+#     prune_config = {
+#             "module": None,
+#             "scope": "local",
+#             "block_num": 64,
+#             "sparsity": 0.5
+#     }
+#     model = DownstreamModel()
+#     model.to(device)
+#     # prune_config['module'] = "fc1"
+#     module = model.pretrained.encoder.layer._modules['0'].attention.self.query.weight.detach()
+#     # model.downstream_train()
+    
+#     model.load_downstream_model()
+#     # model.check_sparsity(module=model.fc1)
+#     acc_1 = model.downstream_test()
+    
+#     layers_to_prune = [2, 4, 6, 8, 10]  # list(range(12))
+#     weights_to_prune = ['Q', 'K', 'V']
+    
+#     print('Pruing Configuraitons:')
+#     print('Block_num=', prune_config['block_num'])
+#     print('Layers to prune=', layers_to_prune)
+#     print('Weights to prune=', weights_to_prune)
+#     for i in [0.5, 0.6, 0.7, 0.8]: # 0.9, 0.92, 0.95, 0.98, 1.00]:
+#     # for i in [0.9, 0.95, 0.98, 1.00]:
+#         print('========== Prune after training ===========')
+#         model.load_downstream_model()
+#         print("Sparsity=%f"%i)
+#         prune_config = {
+#             "module": 'fc1',
+#             "scope": "local",
+#             "block_num": 64,
+#             "sparsity": i
+#         }
+#         # model.structured_prune(module=model.fc1)
+#         model.bert_attention_prune(layers_to_prune, weights_to_prune)
+#         acc_2 = model.downstream_test()
+#         print(f"Before pruning: acc={acc_1}. After pruning: acc={acc_2}.")
 
