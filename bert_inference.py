@@ -224,7 +224,7 @@ if __name__ == '__main__':
             "sparsity": 0.5
     }
     model = DownstreamModel()
-    # model.to(device)
+    model.to(device)
     
     model.load_downstream_model()
     # model.check_sparsity(module=model.fc1)
@@ -245,18 +245,20 @@ if __name__ == '__main__':
         print('========== Prune after training ===========')
         model.__init__()
         model.load_downstream_model()
+        model.to(device)
+        
+        # Step 1: prune all layers with base sparsity. This is done outside the inner loop for saving time.
+        prune_config = {
+            "module": 'fc1',
+            "scope": "local",
+            "block_num": 64,
+            "sparsity": base_sparsity
+        }
+        model.bert_attention_prune(list(range(12)), weights_to_prune)
+        acc_1 = model.downstream_test()
+                    
         for outstanding_sparsity in [0.6, 0.7, 0.8]:
             print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
-            # Step 1: prune all layers with base sparsity
-            prune_config = {
-                "module": 'fc1',
-                "scope": "local",
-                "block_num": 64,
-                "sparsity": base_sparsity
-            }
-            model.bert_attention_prune(list(range(12)), weights_to_prune)
-            acc_1 = model.downstream_test()
-
             # Step 2: prune the outstanding layer with outstanding sparsity
             prune_config = {
                 "module": 'fc1',
