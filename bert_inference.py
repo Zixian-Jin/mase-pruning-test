@@ -179,8 +179,7 @@ class DownstreamModel(torch.nn.Module):
         print('INFO: Finished pruning.')
 
     def structured_prune(self, module, silent=True):
-        if not silent:
-            print('INFO: Pruning...')
+        print(f'INFO: Pruning module {module}...')
         # module = getattr(self, prune_config['module'])
         data = module.weight.data
         sparsity = prune_config['sparsity']
@@ -246,8 +245,6 @@ if __name__ == '__main__':
         print('========== Prune after training ===========')
         model.__init__()
         model.load_downstream_model()
-        model.downstream_test()
-        print('DEBUGGING')
         for outstanding_sparsity in [0.6, 0.7, 0.8]:
             print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
             # Step 1: prune all layers with base sparsity
