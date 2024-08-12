@@ -230,7 +230,7 @@ if __name__ == '__main__':
     # model.check_sparsity(module=model.fc1)
     
     
-    base_sparsity = 0.3
+    base_sparsity = 0.2
     outstanding_sparsity = 0.4
     outstanding_layer = 1
     weights_to_prune = ['Q', 'K', 'V']
@@ -248,16 +248,17 @@ if __name__ == '__main__':
         model.to(device)
         
         # Step 1: prune all layers with base sparsity. This is done outside the inner loop for saving time.
-        prune_config = {
-            "module": 'fc1',
-            "scope": "local",
-            "block_num": 64,
-            "sparsity": base_sparsity
-        }
-        model.bert_attention_prune(list(range(12)), weights_to_prune)
-        acc_1 = model.downstream_test()
+        if base_sparsity > 0:
+            prune_config = {
+                "module": 'fc1',
+                "scope": "local",
+                "block_num": 64,
+                "sparsity": base_sparsity
+            }
+            model.bert_attention_prune(list(range(12)), weights_to_prune)
+            acc_1 = model.downstream_test()
                     
-        for outstanding_sparsity in [0.4, 0.5, 0.6]:
+        for outstanding_sparsity in [0.4, 0.5, 0.6, 0.7, 0.8]:
             print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
             # Step 2: prune the outstanding layer with outstanding sparsity
             prune_config = {
