@@ -50,6 +50,8 @@ class DownstreamModel(torch.nn.Module):
         self.init_dataloader()
         self.fc1 = torch.nn.Linear(768, 192)
         self.fc2 = torch.nn.Linear(192, 2)
+        self.fc1.to(device)
+        self.fc2.to(device)
     
     def init_dataset(self):
         self.train_dataset = BertDataset('train')
@@ -223,7 +225,7 @@ if __name__ == '__main__':
             "sparsity": 0.5
     }
     model = DownstreamModel()
-    model.to(device)
+    # model.to(device)
     
     model.load_downstream_model()
     # model.check_sparsity(module=model.fc1)
@@ -244,8 +246,9 @@ if __name__ == '__main__':
         print('========== Prune after training ===========')
         model.__init__()
         model.load_downstream_model()
-        
-        for outstanding_sparsity in [0.5, 0.6, 0.7, 0.8]:
+        model.downstream_test()
+        print('DEBUGGING')
+        for outstanding_sparsity in [0.6, 0.7, 0.8]:
             print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
             # Step 1: prune all layers with base sparsity
             prune_config = {
