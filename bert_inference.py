@@ -254,7 +254,7 @@ if __name__ == '__main__':
                 "block_num": 64,
                 "sparsity": base_sparsity
             }
-            model.bert_attention_prune([list(range(12))], weights_to_prune)
+            model.bert_attention_prune(list(range(12)), weights_to_prune)
             acc_1 = model.downstream_test()
 
             # Step 2: prune the outstanding layer with outstanding sparsity
