@@ -230,8 +230,8 @@ if __name__ == '__main__':
     # model.check_sparsity(module=model.fc1)
     
     
-    base_sparsity = 0.5
-    outstanding_sparsity = 0.6
+    base_sparsity = 0.3
+    outstanding_sparsity = 0.4
     outstanding_layer = 1
     weights_to_prune = ['Q', 'K', 'V']
     
@@ -257,7 +257,7 @@ if __name__ == '__main__':
         model.bert_attention_prune(list(range(12)), weights_to_prune)
         acc_1 = model.downstream_test()
                     
-        for outstanding_sparsity in [0.6, 0.7, 0.8]:
+        for outstanding_sparsity in [0.4, 0.5, 0.6]:
             print("Base Sparsity=%f, Outstanding Sparsity=%f"%(base_sparsity, outstanding_sparsity))
             # Step 2: prune the outstanding layer with outstanding sparsity
             prune_config = {
