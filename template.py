@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 import rank_functions
+from registered_pruning import *
 import utils
 
 seed = 42
@@ -218,6 +219,7 @@ class Toy:
         self.model.load_state_dict(torch.load(path))
         
     def simple_prune(self, module, thres):
+        print('WARNING: this method is deprecated. Use update_module_parametrizatoin instead.')
         print('INFO: Pruning...')
         # print('Weight before pruning:')
         # print(module.weight.data)
@@ -228,11 +230,11 @@ class Toy:
         print('INFO: Finished pruning.')
 
     def structured_prune(self, silent=True):
+        print('WARNING: this method is deprecated. Use update_module_parametrizatoin instead.')
         module = getattr(self.model, args.prune_config['module'])
-        data = module.weight.data
-        sparsity = args.prune_config['sparsity']
+        data = module.weight.datach()
 
-        mask = rank_functions.block_rank_fn_local(data, args.prune_config, sparsity, silent=silent)
+        mask = rank_functions.block_rank_fn_local(data, args.prune_config, silent=silent)
         mask = mask.to(args.device)
         
         module = getattr(self.model, args.prune_config['module'])
@@ -240,75 +242,102 @@ class Toy:
 
 
            
-
-        
-
-        
-if __name__ == '__main__':
-    g_seed = random.randint(0, 100)  # change seed for every program execution
-    
+def pruning_sensitivity_test():
     toy = Toy()
     
-
     args.prune_config = {
             "module": toy.model.fc1,
             "scope": "local",
             "block_num": 64,
-            "sparsity": 0.5
+            "sparsity": 0.5        
     }
 
-    toy = Toy()
-    # toy.train(prune=False)
-    toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
-    module = toy.model.fc1
-    toy.check_sparsity(module)  # the second linear layer
-    
-    # print('========== Prune after training ===========')
-    # acc_1, loss_1 = toy.eval()
-    # # toy.simple_prune(module=module, thres=0.1)
-    # toy.structured_prune(module=module, block_num=40, sparsity=0.9)
-    # acc_2, loss_2 = toy.eval()
-    # print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
-    
-    ################ For Sweeping Pruning Params ##############
     toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
     acc_1, loss_1 = toy.eval()
     
-    # for i in np.linspace(0.5, 1, 6):
-    for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98]:
-        toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
-        print('========== Prune after training ===========')
-        print("Sparsity=%f"%i)
-        args.prune_config = {
-            "module": 'fc1',
-            "scope": "local",
-            "block_num": 16,
-            "sparsity": i
-        }
-        toy.structured_prune()
-        acc_2, loss_2 = toy.eval()
-        print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
-    ################################################################
-        
-    # print('========== Prune with training ===========')
-    # toy = Toy()
-    # toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=0.5)
-    # acc_1, loss_1 = toy.eval()
-    # acc_2, loss_2 = toy.eval()
-    # print(acc_1, loss_1, acc_2, loss_2)
+    base_cfg = {'block_num': 10, 'sparsity': 0.0}
+    outstanding_cfg = {'block_num': 10, 'sparsity': 0.7}
     
-    ################ For Sweeping Pruning Params ##############    
-    # for i in np.linspace(0.8, 1, 3):
-    # # for i in [0.9, 1]:
-    #     print('========== Prune with training ===========')
+    tunable_layer_list = ['fc2', 'fc1']
+    for layer in tunable_layer_list:
+        for base_layer in tunable_layer_list:
+            module = getattr(toy.model, base_layer)
+            if base_layer != layer:
+                update_module_parametrization(module, 'weight', base_cfg)
+            else:
+                update_module_parametrization(module, 'weight', outstanding_cfg)
+        acc_2, loss_2 = toy.eval()
+        print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
+        print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
+    
+
+
+if __name__ == '__main__':
+    pruning_sensitivity_test()
+    
+    # g_seed = random.randint(0, 100)  # change seed for every program execution
+    
+    # toy = Toy()
+    
+
+    # args.prune_config = {
+    #         "module": toy.model.fc1,
+    #         "scope": "local",
+    #         "block_num": 64,
+    #         "sparsity": 0.5
+    # }
+
+    # toy = Toy()
+    # # toy.train(prune=False)
+    # toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
+    # module = toy.model.fc1
+    # toy.check_sparsity(module)  # the second linear layer
+    
+    # # print('========== Prune after training ===========')
+    # # acc_1, loss_1 = toy.eval()
+    # # # toy.simple_prune(module=module, thres=0.1)
+    # # toy.structured_prune(module=module, block_num=40, sparsity=0.9)
+    # # acc_2, loss_2 = toy.eval()
+    # # print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
+    
+    # ################ For Sweeping Pruning Params ##############
+    # toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
+    # acc_1, loss_1 = toy.eval()
+    
+    # # for i in np.linspace(0.5, 1, 6):
+    # for i in [0.7, 0.8, 0.9, 0.92, 0.95, 0.98]:
+    #     toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
+    #     print('========== Prune after training ===========')
     #     print("Sparsity=%f"%i)
-    #     toy = Toy()
     #     args.prune_config = {
     #         "module": 'fc1',
     #         "scope": "local",
     #         "block_num": 16,
     #         "sparsity": i
     #     }
-    #     toy.train(prune=True)
-    ################################################################
+    #     toy.structured_prune()
+    #     acc_2, loss_2 = toy.eval()
+    #     print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
+    # ################################################################
         
+    # # print('========== Prune with training ===========')
+    # # toy = Toy()
+    # # toy.train(prune=True, prune_module=toy.model.fc1, prune_sparsity=0.5)
+    # # acc_1, loss_1 = toy.eval()
+    # # acc_2, loss_2 = toy.eval()
+    # # print(acc_1, loss_1, acc_2, loss_2)
+    
+    # ################ For Sweeping Pruning Params ##############    
+    # # for i in np.linspace(0.8, 1, 3):
+    # # # for i in [0.9, 1]:
+    # #     print('========== Prune with training ===========')
+    # #     print("Sparsity=%f"%i)
+    # #     toy = Toy()
+    # #     args.prune_config = {
+    # #         "module": 'fc1',
+    # #         "scope": "local",
+    # #         "block_num": 16,
+    # #         "sparsity": i
+    # #     }
+    # #     toy.train(prune=True)
+    # ################################################################

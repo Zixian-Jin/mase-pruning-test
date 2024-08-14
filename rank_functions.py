@@ -39,7 +39,7 @@ def get_block_mask_local(data: torch.Tensor, config: dict, sparsity: float) -> t
     
     return block_mask
 
-def block_rank_fn_local(data, config, sparsity: float, silent=True) -> torch.Tensor:
+def block_rank_fn_local(data: torch.Tensor, config, silent=True) -> torch.Tensor:
     '''
         config = {
             block_num: 4,
@@ -48,9 +48,17 @@ def block_rank_fn_local(data, config, sparsity: float, silent=True) -> torch.Ten
     '''
     
     row, col = data.shape
-    assert (col % config['block_num'] == 0), f"The weight is not divisible by {config['block_num']}."
+    sparsity = config['sparsity']
+    block_num = config['block_num']
+    assert (col % config['block_num'] == 0), f"The weight col={col} is not divisible by {config['block_num']}."
     assert (sparsity <= 1 and sparsity >= 0)
     config['block_size'] = int(col / config['block_num'])
+    
+    # 0. special cases
+    if sparsity == 0.0:
+        return torch.ones((row, col))
+    if sparsity == 1.0:
+        return torch.zeros((row, col))
     
     # 1. create a block-level mask
     block_mask = get_block_mask_local(data, config, sparsity)
