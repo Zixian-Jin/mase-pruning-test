@@ -39,7 +39,8 @@ def add_targets(encodings, label):
 
 
 def main():
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     # Data Preprocessing
     datasets = load_dataset('glue', 'qnli')
 
@@ -90,11 +91,12 @@ def main():
 
     print("***** Running eval *****")
     model.eval()
-
+    model.to(device)
     labels = []
     predictions = []
 
     for step, batch in enumerate(tqdm(eval_dataloader, desc="Eval Iteration")):
+        batch = {key: value.to(device) for key, value in batch.items()}
         outputs = model(**batch)
         predicted = outputs.logits.argmax(dim=-1)
 
