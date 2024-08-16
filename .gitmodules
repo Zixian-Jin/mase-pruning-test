@@ -1,0 +1,3 @@
+[submodule "bert-QNLI-huang624"]
+	path = refs/bert-QNLI-huang624
+	url = git@github.com:huang624/NaturalLanguageUnderstanding-Fine_tuning_Bert_on_QNLI_Dataset.git
