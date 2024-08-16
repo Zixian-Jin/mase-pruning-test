@@ -67,9 +67,9 @@ def main():
 
 
     model_name = 'bert-base-cased'
-    model_path = './../bert-QNLI-pretrained.bin'
+    model_path = './../BERT-MODELS/bert-QNLI-pretrained.bin'
     # tokenizer = BertTokenizer.from_pretrained(model_name)
-    config = BertConfig.from_pretrained("./../bert-QNLI-config.json", num_labels=2) 
+    config = BertConfig.from_pretrained("./../BERT-MODELS/bert-QNLI-config.json", num_labels=2) 
     model = BertForSequenceClassification.from_pretrained(model_path, config=config)
     # model = BertForSequenceClassification.from_pretrained(
     #                                     model_name, 
