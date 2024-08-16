@@ -9,7 +9,7 @@ from tqdm.auto import tqdm, trange
 import math
 from sklearn.metrics import classification_report
 
-from accelerate import Accelerator
+# from accelerate import Accelerator
 from transformers import (
     AdamW,
     AutoConfig,
@@ -108,3 +108,6 @@ def main():
 
     for line in classification_report(labels, predictions).split('\n'):
         print(line)
+
+if __name__ == '__main__':
+    main()
