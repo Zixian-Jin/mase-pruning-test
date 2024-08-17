@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-
+from rank_functions import *
 
 def matrix_profiler(mat: torch.Tensor, rank: float, scope: str):
     ''' analyse the top k entries of each row of a matrix'''
@@ -33,4 +33,40 @@ def plot_array_histogram(tensor: torch.Tensor, bins=50):
     # ax.legend(['Data 1', 'Data 2'])
 
     plt.show()
+
+
+def check_sparsity(self, module):
+    w = module.weight.data
+    # print(w)
+    thres = 0.05
+    max_val = w.abs().max().item()
+    for thres in np.linspace(0.00, max_val, 10):
+        mask = torch.where(torch.abs(w)<thres, 1, 0)
+        print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
     
+    # values, indicies = utils.matrix_profiler(w, rank=0.1, scope='local')
+    # print('Top 10% elements in the analysed matrix:')
+    # print('Values=', values)
+    # print('Indicies=', indicies)
+        
+
+def simple_prune(module, thres):
+    print('WARNING: this function is deprecated. Use update_module_parametrizatoin instead.')
+    print('INFO: Pruning...')
+    # print('Weight before pruning:')
+    # print(module.weight.data)
+    mask = (torch.abs(module.weight.data) >= thres)
+    module.weight.data *= mask.float()
+    # print('Weight after pruning:')
+    # print(module.weight.data)
+    print('INFO: Finished pruning.')
+
+def structured_prune(module, prune_cfg, silent=True):
+    print('WARNING: this function is deprecated. Use update_module_parametrizatoin instead.')
+    print(f'INFO: Pruning module {module}...')
+    data = module.weight.datach()
+    mask = block_rank_fn_local(data, prune_cfg, silent=silent)
+    module.weight.data *= mask
+    if not silent:
+        print('INFO: Finished pruning.')
+

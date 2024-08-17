@@ -154,41 +154,6 @@ class DownstreamModel(torch.nn.Module):
         model.load_state_dict(downstream_params, strict=False)
         print('INFO: loaded downstream model from %s'%p)
 
-    def check_sparsity(self, module):
-        w = module.weight.data
-        # print(w)
-        thres = 0.05
-        max_val = w.abs().max().item()
-        for thres in np.linspace(0.00, max_val, 10):
-            mask = torch.where(torch.abs(w)<thres, 1, 0)
-            print("Sparsity of current module with thres=%f = %f"%(thres, torch.sum(mask)/(w.shape[0]*w.shape[1])))
-        
-        # values, indicies = utils.matrix_profiler(w, rank=0.1, scope='local')
-        # print('Top 10% elements in the analysed matrix:')
-        # print('Values=', values)
-        # print('Indicies=', indicies)
-        
-    def simple_prune(self, module, thres):
-        print('INFO: Pruning...')
-        # print('Weight before pruning:')
-        # print(module.weight.data)
-        mask = (torch.abs(module.weight.data) >= thres)
-        module.weight.data *= mask.float()
-        # print('Weight after pruning:')
-        # print(module.weight.data)
-        print('INFO: Finished pruning.')
-
-    def structured_prune(self, module, silent=True):
-        print(f'INFO: Pruning module {module}...')
-        # module = getattr(self, prune_config['module'])
-        data = module.weight.data
-        sparsity = prune_config['sparsity']
-
-        mask = rank_functions.block_rank_fn_local(data, prune_config, sparsity, silent=silent)
-        mask = mask.to(device)
-        module.weight.data *= mask
-        if not silent:
-            print('INFO: Finished pruning.')
 
     def bert_attention_prune(self, layer_list, weight_list):
         '''
