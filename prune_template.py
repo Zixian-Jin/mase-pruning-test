@@ -88,7 +88,7 @@ def bert_prune_unit(model: nn.Module, new_bert_prune_config):
         
     for layer, module_dict in new_bert_prune_config.items():
         for name, cfg in module_dict.items():
-            if g_last_bert_prune_config[layer][name][cfg] == new_bert_prune_config[layer][name][cfg]:
+            if g_last_bert_prune_config[layer][name]== new_bert_prune_config[layer][name]:
                 pass
             else:
                 module = find_bert_tunable_module(model, str(layer), name)
