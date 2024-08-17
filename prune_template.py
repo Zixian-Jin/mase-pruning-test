@@ -79,7 +79,23 @@ def init_bert_configs():
     BERT_QNLI_PRUNE_CONFIGS['classifier']['Linear'] = empty_sparse_cfg
     BERT_QNLI_PRUNE_CONFIGS.update(BERT_PRUNE_CONFIGS)
 
-def bert_prune(model: nn.Module):
+
+def bert_prune_unit(model: nn.Module, new_bert_prune_config):
+    global g_last_bert_prune_config
+    
+    if g_last_bert_prune_config == {}:
+        g_last_bert_prune_config = new_bert_prune_config
+        
+    for layer, module_dict in new_bert_prune_config.items():
+        for name, cfg in module_dict.items():
+            if g_last_bert_prune_config[layer][name][cfg] == new_bert_prune_config[layer][name][cfg]:
+                pass
+            else:
+                module = find_bert_tunable_module(model, str(layer), name)
+                update_module_parametrization(module, 'weight', cfg)
+
+
+def bert_prune_example(model: nn.Module):
     init_bert_configs()
     print(BERT_QNLI_PRUNE_CONFIGS)
     layer = 0
@@ -89,42 +105,31 @@ def bert_prune(model: nn.Module):
     module = find_bert_tunable_module(model, str(layer), 'Q')
     update_module_parametrization(module, 'weight', new_cfg)
 
-def pruning_sensitivity_test(toy):
-    
-    
-    prune_config = {
-            "module": toy.model.fc1,
-            "scope": "local",
-            "block_num": 64,
-            "sparsity": 0.5        
-    }
 
-    toy.load_model('./ckpts/mnist_cnn_model_unpruned.pth')
-    acc_1, loss_1 = toy.eval()
-    
+def bert_pruning_sensitivity_test():
+    program = BertQNLI()
+    acc_1 = program.eval()
+
     base_cfg = {'block_num': 10, 'sparsity': 0.0}
     outstanding_cfg = {'block_num': 10, 'sparsity': 0.7}
     
-    tunable_layer_list = ['fc2', 'fc1']
-    for layer in tunable_layer_list:
-        for base_layer in tunable_layer_list:
-            module = getattr(toy.model, base_layer)
-            if base_layer != layer:
-                update_module_parametrization(module, 'weight', base_cfg)
-            else:
-                update_module_parametrization(module, 'weight', outstanding_cfg)
-        acc_2, loss_2 = toy.eval()
+    last_layer = 11
+    for layer in range(12):
+        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['Q'] = outstanding_cfg
+        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['K'] = outstanding_cfg
+        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['V'] = outstanding_cfg
+        
+        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['Q'] = base_cfg
+        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['K'] = base_cfg
+        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['V'] = base_cfg
+
+
         print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
-        print(f"Before pruning: acc={acc_1}, loss={loss_1}. After pruning: acc={acc_2}, loss={loss_2}")
-
-
-def main():
-    program = BertQNLI()
-    acc_1 = program.eval()
-    bert_prune(program.model)
-    acc_2 = program.eval()
-    print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+        acc_2 = program.eval()
+        print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+        last_layer = layer
     
     
 if __name__ == '__main__':
-    main()
+    g_last_bert_prune_config = {}
+    bert_pruning_sensitivity_test()
