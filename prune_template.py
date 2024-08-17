@@ -123,6 +123,7 @@ def bert_pruning_sensitivity_test():
         BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['K'] = base_cfg
         BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['V'] = base_cfg
 
+        bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
 
         print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
         acc_2 = program.eval()
