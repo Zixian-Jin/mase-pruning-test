@@ -143,9 +143,10 @@ def bert_pruning_sensitivity_test():
                 
                 bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
 
-                print(f'Layer pruned = {layer}, config = {outstanding_cfg}')
                 acc_2 = program.eval()
+                print(f'Layer pruned = {layer}, config = {outstanding_cfg}')
                 print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+                print()
                 last_layer = layer
     
     
