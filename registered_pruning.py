@@ -7,9 +7,10 @@ from rank_functions import *
 
 
 class StructuredPruningMask(nn.Module):
-    def __init__(self, mask):
+    def __init__(self, mask, device=('cuda' if torch.cuda.is_available() else 'cpu')):
         super().__init__()
         self.mask = mask
+        self.mask.to(device)
 
     def forward(self, x):
         return x * self.mask
