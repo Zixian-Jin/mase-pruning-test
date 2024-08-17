@@ -6,6 +6,7 @@ import numpy as np
 
 def block_mixed_norm(block: torch.Tensor):
     # for max norm: p = float('inf')
+    return block.norm(2.0)  # TODO
     norm_factors = {"l1":1, "l2":0, "exp": 0, "inf":0}
     norms = [block.norm(1.0), block.norm(2.0), block_exp_norm(block), block.norm(float('inf'))]
     return torch.dot(torch.Tensor(list(norm_factors.values())), torch.Tensor(norms))  # weighted sum of different norms

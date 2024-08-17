@@ -117,24 +117,36 @@ def bert_pruning_sensitivity_test():
     acc_1 = program.eval()
 
     base_cfg = {'block_num': 2, 'sparsity': 0.0}
-    outstanding_cfg = {'block_num': 16, 'sparsity': 0.7}
     
-    last_layer = 11
-    for layer in range(12):
-        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['Q'] = outstanding_cfg
-        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['K'] = outstanding_cfg
-        BERT_QNLI_PRUNE_CONFIGS[str(layer)]['V'] = outstanding_cfg
-        
-        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['Q'] = base_cfg
-        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['K'] = base_cfg
-        BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['V'] = base_cfg
+    # factors of 768 = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 768]
+    count = 0
+    for block_num in [16, 32, 64, 128, 256]:
+        for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
+            outstanding_cfg = {'block_num': block_num, 'sparsity': sparsity}
+            print(f'\n\n================= Trial #{count} ===================')
+            print(f'oustanding_cfg = {outstanding_cfg}')
+            last_layer = 11
+            for layer in range(12):
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['Q'] = outstanding_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['K'] = outstanding_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['V'] = outstanding_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['W0'] = outstanding_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['W1'] = outstanding_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(layer)]['W2'] = outstanding_cfg 
+                    
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['Q'] = base_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['K'] = base_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['V'] = base_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['W0'] = base_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['W1'] = base_cfg
+                BERT_QNLI_PRUNE_CONFIGS[str(last_layer)]['W2'] = base_cfg
+                
+                bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
 
-        bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
-
-        print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
-        acc_2 = program.eval()
-        print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
-        last_layer = layer
+                print(f'Layer pruned = {layer}, config = {outstanding_cfg}')
+                acc_2 = program.eval()
+                print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+                last_layer = layer
     
     
 if __name__ == '__main__':

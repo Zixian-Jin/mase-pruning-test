@@ -18,7 +18,7 @@ class StructuredPruningMask(nn.Module):
 #     return block_rank_fn_local(module.weight.detach(), sparsity_cfg, silent)
 
 
-def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: dict):
+def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: dict, silent=True):
     
     assert param_name in ['weight', 'bias'], "param_name can only be weight or bias."
     assert new_cfg != None, "new_cfg cannot be empty!"
@@ -33,7 +33,8 @@ def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: d
     
     new_mask = block_rank_fn_local(original_param.detach(), new_cfg)    
     parametrize.register_parametrization(module, param_name, StructuredPruningMask(new_mask))
-    print(f'Successfully re-registered parametrization with new_cfg={new_cfg}')
+    if not silent:
+        print(f'Successfully re-registered parametrization with new_cfg={new_cfg}')
 
 
 
