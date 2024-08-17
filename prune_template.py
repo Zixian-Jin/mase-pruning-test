@@ -1,3 +1,4 @@
+import os
 import copy
 from torch import nn
 
@@ -81,6 +82,33 @@ def init_bert_configs():
     BERT_QNLI_PRUNE_CONFIGS['classifier']['Linear'] = empty_sparse_cfg
     BERT_QNLI_PRUNE_CONFIGS.update(BERT_PRUNE_CONFIGS)
 
+def bert_save_masks():    
+    program = BertQNLI()
+    model = program.model
+    output_root_dir = './ckpts/BERT-QNLI-masks'
+    if not os.path.exists(output_root_dir):
+        os.makedirs(output_root_dir)
+        
+    init_bert_configs()
+    prune_configs = copy.deepcopy(BERT_QNLI_PRUNE_CONFIGS)
+
+    count = 0
+    for layer, module_dict in prune_configs.items():
+        for name, cfg in module_dict.items():
+            module = find_bert_tunable_module(model, str(layer), name)
+            param = module.weight
+            for block_num in [16, 32, 64, 128, 256]:
+                for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
+                    sp_cfg = {'block_num': block_num, 'sparsity': sparsity}
+                    new_mask = block_rank_fn_local(param.detach(), sp_cfg)
+                    new_mask = new_mask.bool()
+                    mask_tag = f'layer_{layer}_module_{name}_weight_bn_{block_num}_sp_{int(sparsity*100)}.pt'
+                    save_path = os.path.join(output_root_dir, mask_tag)
+                    torch.save(new_mask, save_path)
+                    print(f'Tensor saved to {save_path}')
+                    count += 1
+    print(f'Successfully saved {count} mask tensors of torch.bool type.')
+
 
 def bert_prune_unit(model: nn.Module, new_bert_prune_config):
     global g_last_bert_prune_config
@@ -125,6 +153,7 @@ def bert_pruning_sensitivity_test():
             outstanding_cfg = {'block_num': block_num, 'sparsity': sparsity}
             print(f'\n\n================= Trial #{count} ===================')
             print(f'oustanding_cfg = {outstanding_cfg}')
+            count += 1
             last_layer = 11
             for layer in range(12):
                 BERT_QNLI_PRUNE_CONFIGS[str(layer)]['Q'] = outstanding_cfg
@@ -152,4 +181,5 @@ def bert_pruning_sensitivity_test():
     
 if __name__ == '__main__':
     g_last_bert_prune_config = {}
-    bert_pruning_sensitivity_test()
+    # bert_pruning_sensitivity_test()
+    bert_save_masks()
