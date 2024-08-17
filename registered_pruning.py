@@ -7,13 +7,12 @@ from rank_functions import *
 
 
 class StructuredPruningMask(nn.Module):
-    def __init__(self, mask, device=('cuda' if torch.cuda.is_available() else 'cpu')):
+    def __init__(self, mask):
         super().__init__()
-        self.mask = mask
-        self.mask.to(device)
+        self.register_buffer('mask', mask)
 
     def forward(self, x):
-        return x * self.mask
+        return x * self.mask.to(x.device)  # TODO
 
 # def get_structured_mask(module, sparsity_cfg, silent=True) -> torch.Tensor:
 #     return block_rank_fn_local(module.weight.detach(), sparsity_cfg, silent)
@@ -38,5 +37,3 @@ def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: d
 
 
 
-model = nn.Linear(10, 5)
-output = model(torch.randn(1, 10))
