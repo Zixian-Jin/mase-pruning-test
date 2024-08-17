@@ -114,7 +114,7 @@ def bert_pruning_sensitivity_test():
     print(BERT_QNLI_PRUNE_CONFIGS)
 
     program = BertQNLI()
-    # acc_1 = program.eval()
+    acc_1 = program.eval()
 
     base_cfg = {'block_num': 2, 'sparsity': 0.0}
     outstanding_cfg = {'block_num': 16, 'sparsity': 0.7}
@@ -132,8 +132,8 @@ def bert_pruning_sensitivity_test():
         bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
 
         print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
-        # acc_2 = program.eval()
-        # print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+        acc_2 = program.eval()
+        print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
         last_layer = layer
     
     
