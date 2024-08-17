@@ -107,6 +107,9 @@ def bert_prune_example(model: nn.Module):
 
 
 def bert_pruning_sensitivity_test():
+    init_bert_configs()
+    print(BERT_QNLI_PRUNE_CONFIGS)
+
     program = BertQNLI()
     acc_1 = program.eval()
 
