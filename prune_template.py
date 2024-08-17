@@ -1,9 +1,11 @@
-from bert_QNLI import BertQNLI
+import copy
+from torch import nn
 
+from bert_QNLI import BertQNLI
 from rank_functions import block_rank_fn_local
 from registered_pruning import update_module_parametrization
 from utils import *
-from torch import nn
+
 
 def get_nested_attr(root_obj, attr_path: str):
     '''
@@ -84,7 +86,7 @@ def bert_prune_unit(model: nn.Module, new_bert_prune_config):
     global g_last_bert_prune_config
     
     if g_last_bert_prune_config == {}:
-        g_last_bert_prune_config = new_bert_prune_config
+        g_last_bert_prune_config = copy.deepcopy(new_bert_prune_config)
         
     for layer, module_dict in new_bert_prune_config.items():
         for name, cfg in module_dict.items():
@@ -93,7 +95,8 @@ def bert_prune_unit(model: nn.Module, new_bert_prune_config):
             else:
                 module = find_bert_tunable_module(model, str(layer), name)
                 update_module_parametrization(module, 'weight', cfg)
-
+                
+    g_last_bert_prune_config = copy.deepcopy(new_bert_prune_config)
 
 def bert_prune_example(model: nn.Module):
     init_bert_configs()
@@ -111,10 +114,10 @@ def bert_pruning_sensitivity_test():
     print(BERT_QNLI_PRUNE_CONFIGS)
 
     program = BertQNLI()
-    acc_1 = program.eval()
+    # acc_1 = program.eval()
 
-    base_cfg = {'block_num': 10, 'sparsity': 0.0}
-    outstanding_cfg = {'block_num': 10, 'sparsity': 0.7}
+    base_cfg = {'block_num': 2, 'sparsity': 0.0}
+    outstanding_cfg = {'block_num': 16, 'sparsity': 0.7}
     
     last_layer = 11
     for layer in range(12):
@@ -129,8 +132,8 @@ def bert_pruning_sensitivity_test():
         bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
 
         print(f'Layer pruned = {layer}, sparsity = {outstanding_cfg['sparsity']}')
-        acc_2 = program.eval()
-        print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+        # acc_2 = program.eval()
+        # print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
         last_layer = layer
     
     

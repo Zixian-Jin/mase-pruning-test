@@ -33,7 +33,7 @@ def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: d
     
     new_mask = block_rank_fn_local(original_param.detach(), new_cfg)    
     parametrize.register_parametrization(module, param_name, StructuredPruningMask(new_mask))
-    print(f'Successfully re-registered parametrization for module {module} with new_cfg={new_cfg}')
+    # print(f'Successfully re-registered parametrization for module {module} with new_cfg={new_cfg}')
 
 
 
