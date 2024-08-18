@@ -110,7 +110,7 @@ def bert_save_masks():
     print(f'Successfully saved {count} mask tensors of torch.bool type.')
 
 
-def bert_prune_unit(model: nn.Module, new_bert_prune_config):
+def bert_prune_unit(model: nn.Module, new_bert_prune_config, mask_root_dir='./ckpts/BERT-QNLI-masks'):
     global g_last_bert_prune_config
     
     if g_last_bert_prune_config == {}:
@@ -122,7 +122,14 @@ def bert_prune_unit(model: nn.Module, new_bert_prune_config):
                 pass
             else:
                 module = find_bert_tunable_module(model, str(layer), name)
-                update_module_parametrization(module, 'weight', cfg)
+                
+                # find pre-calculated mask for current module & sparsity cfg
+                mask_tag = f'layer_{layer}_module_{name}_weight_bn_{cfg['block_num']}_sp_{int(cfg['sparsity']*100)}.pt'
+                local_mask_path = os.path.join(mask_root_dir, mask_tag)
+                if not os.path.exists(local_mask_path):
+                    print(f'WARNING: the mask {local_mask_path} does not exists.')
+                    
+                update_module_parametrization(module, 'weight', cfg, local_mask_path)
                 
     g_last_bert_prune_config = copy.deepcopy(new_bert_prune_config)
 
@@ -181,5 +188,5 @@ def bert_pruning_sensitivity_test():
     
 if __name__ == '__main__':
     g_last_bert_prune_config = {}
-    # bert_pruning_sensitivity_test()
-    bert_save_masks()
+    bert_pruning_sensitivity_test()
+    # bert_save_masks()

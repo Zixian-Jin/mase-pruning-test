@@ -68,10 +68,10 @@ def block_rank_fn_local(data: torch.Tensor, config, silent=True) -> torch.Tensor
         print(block_mask)   
         
     # 2. transform block_mask into an elementwise mask
-    element_mask = torch.ones((row, col))
+    element_mask = torch.ones((row, col)).bool()
     for i in range(row):
         for j in range(col):
             block_id = j // config['block_size']
-            element_mask[i][j] = 0 if (block_mask[i][block_id] == 0) else 1
+            element_mask[i][j] = True if (block_mask[i][block_id] == 0) else False
     
     return element_mask

@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.utils.parametrize as parametrize
@@ -18,7 +19,7 @@ class StructuredPruningMask(nn.Module):
 #     return block_rank_fn_local(module.weight.detach(), sparsity_cfg, silent)
 
 
-def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: dict, silent=True):
+def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: dict, local_mask_path=None, silent=True):
     
     assert param_name in ['weight', 'bias'], "param_name can only be weight or bias."
     assert new_cfg != None, "new_cfg cannot be empty!"
@@ -31,7 +32,12 @@ def update_module_parametrization(module: nn.Module, param_name: str, new_cfg: d
         original_param = getattr(module.parametrizations, param_name).original
         parametrize.remove_parametrizations(module, param_name, leave_parametrized=False)  # NOTE: important!
     
-    new_mask = block_rank_fn_local(original_param.detach(), new_cfg)    
+    if (local_mask_path) == None or (not os.path.exists(local_mask_path)):
+        new_mask = block_rank_fn_local(original_param.detach(), new_cfg)    
+    else:
+        # load pre-caculated mask
+        new_mask = torch.load(local_mask_path)
+        
     parametrize.register_parametrization(module, param_name, StructuredPruningMask(new_mask))
     if not silent:
         print(f'Successfully re-registered parametrization with new_cfg={new_cfg}')
