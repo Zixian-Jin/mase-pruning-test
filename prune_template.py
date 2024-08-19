@@ -85,7 +85,7 @@ def init_bert_configs():
 def bert_save_masks():    
     program = BertQNLI()
     model = program.model
-    output_root_dir = './ckpts/BERT-QNLI-masks'
+    output_root_dir = '../BERT-QNLI-masks'
     if not os.path.exists(output_root_dir):
         os.makedirs(output_root_dir)
         
@@ -110,7 +110,7 @@ def bert_save_masks():
     print(f'Successfully saved {count} mask tensors of torch.bool type.')
 
 
-def bert_prune_unit(model: nn.Module, new_bert_prune_config, mask_root_dir='./ckpts/BERT-QNLI-masks'):
+def bert_prune_unit(model: nn.Module, new_bert_prune_config, mask_root_dir='../BERT-QNLI-masks'):
     global g_last_bert_prune_config
     
     if g_last_bert_prune_config == {}:
