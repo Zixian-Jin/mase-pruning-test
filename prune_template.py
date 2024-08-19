@@ -82,10 +82,9 @@ def init_bert_configs():
     BERT_QNLI_PRUNE_CONFIGS['classifier']['Linear'] = empty_sparse_cfg
     BERT_QNLI_PRUNE_CONFIGS.update(BERT_PRUNE_CONFIGS)
 
-def bert_save_masks():    
+def bert_save_masks(output_root_dir='../BERT-QNLI-masks'):    
     program = BertQNLI()
     model = program.model
-    output_root_dir = '../BERT-QNLI-masks'
     if not os.path.exists(output_root_dir):
         os.makedirs(output_root_dir)
         
@@ -98,7 +97,8 @@ def bert_save_masks():
             module = find_bert_tunable_module(model, str(layer), name)
             param = module.weight
             for block_num in [16, 32, 64, 128, 256]:
-                for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
+                # for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
+                for sparsity in [0.3, 0.4]:
                     sp_cfg = {'block_num': block_num, 'sparsity': sparsity}
                     new_mask = block_rank_fn_local(param.detach(), sp_cfg)
                     new_mask = new_mask.bool()
@@ -233,5 +233,5 @@ def bert_pruning_sensitivity_test_type2():
     
 if __name__ == '__main__':
     g_last_bert_prune_config = {}
-    bert_pruning_sensitivity_test_type2()
-    # bert_save_masks()
+    # bert_pruning_sensitivity_test_type2()
+    bert_save_masks('../BERT-QNLI-masks')
