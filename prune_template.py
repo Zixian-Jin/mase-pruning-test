@@ -127,7 +127,9 @@ def bert_prune_unit(model: nn.Module, new_bert_prune_config, mask_root_dir='../B
                 mask_tag = f'layer_{layer}_module_{name}_weight_bn_{cfg['block_num']}_sp_{int(cfg['sparsity']*100)}.pt'
                 local_mask_path = os.path.join(mask_root_dir, mask_tag)
                 if not os.path.exists(local_mask_path):
-                    print(f'WARNING: the mask {local_mask_path} does not exists.')
+                    if not (cfg['sparsity'] == 0.0 or cfg['sparsity'] == 1.0):
+                        # The "all zeros" and "all ones" mask are not designed to be pre-calculated.
+                        print(f'WARNING: the mask {local_mask_path} does not exists.')
                     
                 update_module_parametrization(module, 'weight', cfg, local_mask_path)
                 
