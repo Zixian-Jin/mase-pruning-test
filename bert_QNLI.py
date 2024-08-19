@@ -47,8 +47,8 @@ class BertQNLI():
         self.model = BertForSequenceClassification.from_pretrained(model_path, config=config)
         self.model.to(self.device)
 
-        self.init_dataset(train_samples=25000, val_samples=100)
-        self.init_dataloader(train_bs=10, eval_bs=10)
+        self.init_dataset(train_samples=25000, val_samples=500)
+        self.init_dataloader(train_bs=20, eval_bs=32)
 
     
     def init_dataset(self, train_samples, val_samples):

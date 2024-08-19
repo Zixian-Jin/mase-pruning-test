@@ -146,7 +146,13 @@ def bert_prune_example(model: nn.Module):
     update_module_parametrization(module, 'weight', new_cfg)
 
 
-def bert_pruning_sensitivity_test():
+def bert_pruning_sensitivity_test_type1():
+    '''
+        A single-layer, all-module pruning test.
+        For each trial (i.e., each sparsity cfg), prune 
+        ALL six matmul moduels of a SINGLE layer.
+        TODO: should pooler & classifier be pruned as well?
+    '''
     init_bert_configs()
     print(BERT_QNLI_PRUNE_CONFIGS)
 
@@ -186,9 +192,46 @@ def bert_pruning_sensitivity_test():
                 print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
                 print()
                 last_layer = layer
+                
+                
+
+def bert_pruning_sensitivity_test_type2():
+    '''
+        A all-layer, single-module pruning test.
+        For each trial (i.e., each sparsity cfg), prune 
+        a SINGLE matmul moduel of ALL encoder layers
+    '''
+    init_bert_configs()
+    print(BERT_QNLI_PRUNE_CONFIGS)
+
+    program = BertQNLI()
+    acc_1 = program.eval()
+
+    dense_cfg = {'block_num': 2, 'sparsity': 0.0}
     
+    # factors of 768 = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 768]
+    count = 0
+    for block_num in [16, 32, 64, 128, 256]:
+        for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
+            outstanding_cfg = {'block_num': block_num, 'sparsity': sparsity}
+            print(f'\n\n================= Trial #{count} ===================')
+            print(f'oustanding_cfg = {outstanding_cfg}')
+            count += 1
+            last_module = 'W2'
+            for module in BERT_LAYER_TUNABLE_MATMUL_MAP.keys():
+                # prune only one type of module for all encoder layers
+                for layer in range(12):
+                    BERT_QNLI_PRUNE_CONFIGS[str(layer)][module] = outstanding_cfg
+                    BERT_QNLI_PRUNE_CONFIGS[str(layer)][last_module] = dense_cfg
+                bert_prune_unit(program.model, BERT_QNLI_PRUNE_CONFIGS)
+
+                acc_2 = program.eval()
+                print(f'Module type pruned = {module}, config = {outstanding_cfg}')
+                print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+                print()
+                last_module = module  
     
 if __name__ == '__main__':
     g_last_bert_prune_config = {}
-    bert_pruning_sensitivity_test()
+    bert_pruning_sensitivity_test_type2()
     # bert_save_masks()
