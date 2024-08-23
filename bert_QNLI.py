@@ -1,14 +1,16 @@
-
+import os, sys
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 from datasets import load_dataset, load_metric
 import pandas as pd
-
+import copy
 import logging
 from tqdm.auto import tqdm, trange
-import math
 from sklearn.metrics import classification_report
 
+from utils import *
+from registered_pruning import update_module_parametrization
 # from accelerate import Accelerator
 from transformers import (
     AdamW,
@@ -47,7 +49,7 @@ class BertQNLI():
         self.model = BertForSequenceClassification.from_pretrained(model_path, config=config)
         self.model.to(self.device)
 
-        self.init_dataset(train_samples=25000, val_samples=500)
+        self.init_dataset(train_samples=25000, val_samples=512)
         self.init_dataloader(train_bs=20, eval_bs=32)
 
     
@@ -124,6 +126,128 @@ class BertQNLI():
         acc = 100 * correct / total    
         return acc
     
+
+
+
+
+
+class BertQNLIPrunerProgram(BertQNLI):
+    '''
+        This class is an extended class of <BertQNLI> so that 
+        it is capable of bert-specific pruning.
+    '''
+    
+    
+    # NOTE: this constant map is not expected to be amended anywhere.
+    BERT_LAYER_TUNABLE_MATMUL_MAP = {
+        'Q': ['attention', 'self', 'query'],
+        'K': ['attention', 'self', 'key'],
+        'V': ['attention', 'self', 'value'],
+        'W0': ['attention', 'output', 'dense'],
+        'W1': ['intermediate', 'dense'],
+        'W2': ['output', 'dense'],
+    }
+    
+    
+    def __init__(self):
+        self.last_bert_qnli_prune_cfg = {}
+        self.bert_qnli_prune_cfg =  {}
+        # NOTE: naming style is consistent with mase-dse: <Block>
+        # prune_cfg is expected to be of the following format:
+        # {
+        #     '0': {'Q': None, 'K': None, 'V': None, 'W0': None, 'W1': None, 'W2': None},
+        #     ## '1', '2', ... , '11'
+        #     'pooler': {'Linear': None},
+        #     'classifier': {'Linear': None}
+        # }
+
+        super().__init__()
+        self.init_bert_qnli_configs()
+
+
+    def init_bert_qnli_configs(self) -> None:
+        '''
+            This method only init self.bert_qnli_prune_cfg.
+            self.last_bert_qnli_prune_cfg still remains as an empty dict,
+            and will be initiated at the first time pruner is called.
+        '''
+        empty_sparse_cfg = {'block_num': 2, 'sparsity': 0}
+        # BERT layer 0 - 11
+        for layer in range(0, 12):
+            self.bert_qnli_prune_cfg[str(layer)] = {}
+            for module in ['Q', 'K', 'V', 'W0', 'W1', 'W2']:
+                self.bert_qnli_prune_cfg[str(layer)][module] = empty_sparse_cfg
+        # BERT pooler
+        self.bert_qnli_prune_cfg['pooler'] = {'Linear': empty_sparse_cfg}
+        # Downstream QNLI classfier
+        self.bert_qnli_prune_cfg['classifier'] = {'Linear': empty_sparse_cfg}
+
+
+
+    def get_bert_qnli_tunable_module(self, layer_name, matmul_name) -> nn.Module:
+        '''
+            returns an object for the module to be searched
+            NOTE: returns <nn.Module>, not <nn.Module.weight>!!!
+        '''
+        root_obj = None
+        attr_path = []
+        
+        # Step 1: find root_obj & attr_path
+        if layer_name.isdigit():
+            # '0', '1', ..., '11'
+            root_obj = self.model.bert.encoder.layer._modules[layer_name]
+            attr_path = self.BERT_LAYER_TUNABLE_MATMUL_MAP[matmul_name]
+        elif layer_name == 'pooler':
+            root_obj = self.model.bert.pooler.dense
+            attr_path = []
+        elif layer_name == 'classifier':
+            root_obj = self.model.classifier
+            attr_path = []
+        else:
+            raise NotImplementedError("Unrecognised layer.")
+
+        # Step 2: get the attr
+        module = get_nested_attr(root_obj, attr_path)
+        return module
+        
+        
+        
+    def bert_qnli_prune(self, mask_root_dir='../BERT-QNLI-masks') -> None:
+        '''
+            mask_root_dir: pre-calculated masks, if applicable, can be retrieved from here
+        '''
+        if self.last_bert_qnli_prune_cfg == {}:
+            self.last_bert_qnli_prune_cfg = copy.deepcopy(self.bert_qnli_prune_cfg)
+            
+        for layer, module_dict in self.bert_qnli_prune_cfg.items():
+            for name, cfg in module_dict.items():
+                if self.last_bert_qnli_prune_cfg[layer][name]== self.bert_qnli_prune_cfg[layer][name]:
+                    pass
+                else:
+                    module = self.get_bert_qnli_tunable_module(str(layer), name)
+                    
+                    # find pre-calculated mask for current module & sparsity cfg
+                    mask_tag = f'layer_{layer}_module_{name}_weight_bn_{cfg['block_num']}_sp_{int(cfg['sparsity']*100)}.pt'
+                    local_mask_path = os.path.join(mask_root_dir, mask_tag)
+                    if not os.path.exists(local_mask_path):
+                        if not (cfg['sparsity'] == 0.0 or cfg['sparsity'] == 1.0):
+                            # The "all zeros" and "all ones" mask are not designed to be pre-calculated.
+                            print(f'WARNING: the mask {local_mask_path} does not exists.')
+                        
+                    update_module_parametrization(module, 'weight', cfg, local_mask_path)
+
+        # update last_bert_prune_config
+        self.last_bert_prune_config = copy.deepcopy(self.bert_qnli_prune_cfg)
+
+        
+
+
+
+
+
+        
+
+
 
 # def main():
 

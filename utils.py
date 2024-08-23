@@ -70,3 +70,14 @@ def structured_prune(module, prune_cfg, silent=True):
     if not silent:
         print('INFO: Finished pruning.')
 
+def get_nested_attr(root_obj, attr_path: str):
+    '''
+        e.g., root_obj = model
+              attr_path = ['fc1', 'weight']
+    '''
+    attr_full_name = '.'.join(attr_path)
+    obj = root_obj
+    for attr in attr_path:
+        obj = getattr(obj, attr)
+        assert (obj != None), f"the leaf attr {attr_full_name} to be accessed does not exist!"
+    return obj
