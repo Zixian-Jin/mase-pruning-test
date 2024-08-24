@@ -237,7 +237,7 @@ class BertQNLIPrunerProgram(BertQNLI):
                     update_module_parametrization(module, 'weight', cfg, local_mask_path)
 
         # update last_bert_prune_config
-        self.last_bert_prune_config = copy.deepcopy(self.bert_qnli_prune_cfg)
+        self.last_bert_qnli_prune_cfg = copy.deepcopy(self.bert_qnli_prune_cfg)
 
         
 
