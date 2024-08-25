@@ -21,7 +21,7 @@ def bert_save_masks(output_root_dir='../BERT-QNLI-masks'):
     count = 0
     for layer, module_dict in prune_configs.items():
         for name, cfg in module_dict.items():
-            module = program.get_bert_qnli_tunable_module(model, str(layer), name)
+            module = program.get_bert_qnli_tunable_module(str(layer), name)
             param = module.weight
             for block_num in [16, 32, 64, 128, 256]:
                 # for sparsity in [0.5, 0.6, 0.7, 0.8, 0.9]:
