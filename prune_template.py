@@ -141,24 +141,23 @@ def bert_pruning_sensitivity_test_type3():
     # factors of 768 = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 768]
     count = 0
     for block_num in [64]:
-        for sparsity in [0,1, 0.2, 0.3, 0.4]:
-            outstanding_cfg = {'block_num': block_num, 'sparsity': sparsity}
+        for sparsity in [0.1, 0.2, 0.3, 0.4, 0.5]:
+            qkv_cfg = {'block_num': block_num, 'sparsity': sparsity}
+            linear_cfg = {'block_num': block_num, 'sparsity': 0.1}
             print(f'\n\n================= Trial #{count} ===================')
-            print(f'oustanding_cfg = {outstanding_cfg}')
+            print(f'qkv_cfg = {qkv_cfg}, linear_cfg = {linear_cfg}')
+            for layer in range(12):
+                program.bert_qnli_prune_cfg[str(layer)]['Q'] = qkv_cfg
+                program.bert_qnli_prune_cfg[str(layer)]['K'] = qkv_cfg
+                program.bert_qnli_prune_cfg[str(layer)]['V'] = qkv_cfg
+                program.bert_qnli_prune_cfg[str(layer)]['W0'] = linear_cfg
+                program.bert_qnli_prune_cfg[str(layer)]['W1'] = linear_cfg
+                program.bert_qnli_prune_cfg[str(layer)]['W2'] = linear_cfg 
+            program.bert_qnli_prune()
+            acc_2 = program.eval()
+            print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
+            print()
             count += 1
-            last_module = 'W2'
-            for module in program.BERT_LAYER_TUNABLE_MATMUL_MAP.keys():
-                # prune only one type of module for all encoder layers
-                for layer in range(12):
-                    program.bert_qnli_prune_cfg[str(layer)][module] = outstanding_cfg
-                    program.bert_qnli_prune_cfg[str(layer)][last_module] = dense_cfg
-                program.bert_qnli_prune()
-
-                acc_2 = program.eval()
-                print(f'Module type pruned = {module}, config = {outstanding_cfg}')
-                print(f'Before pruning: acc={acc_1}. After pruning: acc={acc_2}.')
-                print()
-                last_module = module  
                 
                 
 if __name__ == '__main__':
