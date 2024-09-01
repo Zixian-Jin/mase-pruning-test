@@ -176,11 +176,11 @@ class BertQNLIPrunerProgram(BertQNLI):
         for layer in range(0, 12):
             self.bert_qnli_prune_cfg[str(layer)] = {}
             for module in ['Q', 'K', 'V', 'W0', 'W1', 'W2']:
-                self.bert_qnli_prune_cfg[str(layer)][module] = empty_sparse_cfg
+                self.bert_qnli_prune_cfg[str(layer)][module] = copy.deepcopy(empty_sparse_cfg)
         # BERT pooler
-        self.bert_qnli_prune_cfg['pooler'] = {'Linear': empty_sparse_cfg}
+        self.bert_qnli_prune_cfg['pooler'] = {'Linear': copy.deepcopy(empty_sparse_cfg)}
         # Downstream QNLI classfier
-        self.bert_qnli_prune_cfg['classifier'] = {'Linear': empty_sparse_cfg}
+        self.bert_qnli_prune_cfg['classifier'] = {'Linear': copy.deepcopy(empty_sparse_cfg)}
 
 
 
