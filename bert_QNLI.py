@@ -181,9 +181,10 @@ class BertQNLIPrunerProgram(BertQNLI):
         self.bert_qnli_prune_cfg['pooler'] = {'Linear': copy.deepcopy(empty_sparse_cfg)}
         # Downstream QNLI classfier
         self.bert_qnli_prune_cfg['classifier'] = {'Linear': copy.deepcopy(empty_sparse_cfg)}
-
-
-
+        # init last config
+        self.last_bert_qnli_prune_cfg = copy.deepcopy(self.bert_qnli_prune_cfg)
+    
+    
     def get_bert_qnli_tunable_module(self, layer_name, matmul_name) -> nn.Module:
         '''
             returns an object for the module to be searched
@@ -216,9 +217,7 @@ class BertQNLIPrunerProgram(BertQNLI):
         '''
             mask_root_dir: pre-calculated masks, if applicable, can be retrieved from here
         '''
-        if self.last_bert_qnli_prune_cfg == {}:
-            self.last_bert_qnli_prune_cfg = copy.deepcopy(self.bert_qnli_prune_cfg)
-            
+
         for layer, module_dict in self.bert_qnli_prune_cfg.items():
             for name, cfg in module_dict.items():
                 if self.last_bert_qnli_prune_cfg[layer][name]== self.bert_qnli_prune_cfg[layer][name]:
